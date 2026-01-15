@@ -1,6 +1,6 @@
 spring:
   application:
-    name: springboot-init
+    name: ai-passage-creator
   profiles:
     active: local
   # session 配置
@@ -11,7 +11,7 @@ spring:
   # MySQL 数据库配置
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/my_db
+    url: jdbc:mysql://localhost:3306/ai_passage_creator
     username: root
     password: 123456
   # Redis 配置
@@ -22,7 +22,7 @@ spring:
       database: 0
       password:
 server:
-  port: 8123
+  port: 8080
   servlet:
     context-path: /api
     # cookie 30 天过期
