@@ -6,7 +6,7 @@
         <RouterLink to="/">
           <div class="header-left">
             <img class="logo" src="@/assets/logo.png" alt="Logo" />
-            <h1 class="site-title">项目名称</h1>
+            <h1 class="site-title">AI文章创作器</h1>
           </div>
         </RouterLink>
       </a-col>
@@ -53,7 +53,7 @@ import { useRouter } from 'vue-router'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
 import { userLogout } from '@/api/userController.ts'
-import { LogoutOutlined, HomeOutlined } from '@ant-design/icons-vue'
+import { LogoutOutlined, HomeOutlined, EditOutlined, UnorderedListOutlined } from '@ant-design/icons-vue'
 
 const loginUserStore = useLoginUserStore()
 const router = useRouter()
@@ -71,6 +71,18 @@ const originItems = [
     icon: () => h(HomeOutlined),
     label: '主页',
     title: '主页',
+  },
+  {
+    key: '/create',
+    icon: () => h(EditOutlined),
+    label: '创作文章',
+    title: '创作文章',
+  },
+  {
+    key: '/article/list',
+    icon: () => h(UnorderedListOutlined),
+    label: '我的文章',
+    title: '我的文章',
   },
   {
     key: '/admin/userManage',
@@ -142,6 +154,7 @@ const doLogout = async () => {
   margin: 0;
   font-size: 18px;
   color: #1890ff;
+  white-space: nowrap;
 }
 
 .ant-menu-horizontal {

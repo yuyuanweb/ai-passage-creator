@@ -1,54 +1,93 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { useLoginUserStore } from '@/stores/loginUser'
+import { RocketOutlined, UnorderedListOutlined } from '@ant-design/icons-vue'
 
+const router = useRouter()
 const loginUserStore = useLoginUserStore()
+
+const goToCreate = () => {
+  router.push('/create')
+}
+
+const goToList = () => {
+  router.push('/article/list')
+}
 </script>
 
 <template>
   <div id="homePage">
-    <div class="container">
-      <!-- 网站标题和描述 -->
-      <div class="hero-section">
-        <h1 class="hero-title">项目模板</h1>
-        <p class="hero-description">Spring Boot + Vue 全栈项目初始化模板</p>
+    <div class="hero-section">
+      <div class="container">
+        <h1 class="hero-title">AI 爆款文章创作器</h1>
+        <p class="hero-subtitle">让 AI 帮你创作 10万+ 爆款文章，只需不到 10 分钟</p>
+        <a-space size="large" class="hero-actions">
+          <a-button type="primary" size="large" @click="goToCreate">
+            <template #icon>
+              <RocketOutlined />
+            </template>
+            开始创作
+          </a-button>
+          <a-button size="large" @click="goToList">
+            <template #icon>
+              <UnorderedListOutlined />
+            </template>
+            我的文章
+          </a-button>
+        </a-space>
       </div>
+    </div>
 
-      <!-- 欢迎信息 -->
-      <div class="welcome-section">
-        <a-card class="welcome-card">
-          <template #title>
-            <span>👋 欢迎使用</span>
-          </template>
-          <p v-if="loginUserStore.loginUser.id">
-            欢迎回来，{{ loginUserStore.loginUser.userName }}！
-          </p>
-          <p v-else>
-            请先 <router-link to="/user/login">登录</router-link> 或
-            <router-link to="/user/register">注册</router-link>
-          </p>
-        </a-card>
-      </div>
-
-      <!-- 功能介绍 -->
-      <div class="features-section">
-        <h2 class="section-title">模板特性</h2>
-        <a-row :gutter="[24, 24]">
+    <div class="features-section">
+      <div class="container">
+        <h2 class="section-title">核心功能</h2>
+        <a-row :gutter="24">
           <a-col :xs="24" :sm="12" :md="8">
-            <a-card class="feature-card">
-              <template #title>🔐 用户模块</template>
-              <p>完整的用户注册、登录、权限管理功能</p>
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">📝</div>
+              </template>
+              <a-card-meta title="智能生成标题" description="AI 自动分析选题，生成吸引眼球的爆款标题" />
             </a-card>
           </a-col>
           <a-col :xs="24" :sm="12" :md="8">
-            <a-card class="feature-card">
-              <template #title>📝 接口文档</template>
-              <p>集成 Knife4j，自动生成 API 文档</p>
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">📋</div>
+              </template>
+              <a-card-meta title="自动生成大纲" description="智能规划文章结构，确保逻辑清晰完整" />
             </a-card>
           </a-col>
           <a-col :xs="24" :sm="12" :md="8">
-            <a-card class="feature-card">
-              <template #title>🗃️ 数据持久化</template>
-              <p>MyBatis-Flex + MySQL + Redis 数据存储</p>
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">✍️</div>
+              </template>
+              <a-card-meta title="流式生成正文" description="实时展示创作过程，体验打字机般的流畅输出" />
+            </a-card>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8">
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">🖼️</div>
+              </template>
+              <a-card-meta title="智能配图" description="自动检索高质量无版权图片，完美匹配内容" />
+            </a-card>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8">
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">⚡</div>
+              </template>
+              <a-card-meta title="快速高效" description="5-10分钟完成全文创作，效率提升10倍" />
+            </a-card>
+          </a-col>
+          <a-col :xs="24" :sm="12" :md="8">
+            <a-card :bordered="false" class="feature-card">
+              <template #cover>
+                <div class="feature-icon">💾</div>
+              </template>
+              <a-card-meta title="导出分享" description="支持 Markdown 导出，轻松分享到各大平台" />
             </a-card>
           </a-col>
         </a-row>
@@ -63,80 +102,118 @@ const loginUserStore = useLoginUserStore()
   margin: 0;
   padding: 0;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+
+.hero-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 120px 20px;
+  text-align: center;
+  color: white;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-}
-
-/* 英雄区域 */
-.hero-section {
-  text-align: center;
-  padding: 80px 0 60px;
-  margin-bottom: 28px;
 }
 
 .hero-title {
-  font-size: 48px;
+  font-size: 56px;
   font-weight: 700;
-  margin: 0 0 20px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin: 0 0 24px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.hero-description {
-  font-size: 20px;
-  margin: 0;
-  color: #64748b;
+.hero-subtitle {
+  font-size: 24px;
+  margin: 0 0 40px;
+  opacity: 0.95;
 }
 
-/* 欢迎区域 */
-.welcome-section {
-  margin-bottom: 40px;
+.hero-actions {
+  display: inline-flex;
+  gap: 16px;
 }
 
-.welcome-card {
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 12px;
+.hero-actions :deep(.ant-btn-lg) {
+  height: 56px;
+  padding: 0 40px;
+  font-size: 18px;
+  font-weight: 600;
+  border-radius: 28px;
+  transition: all 0.3s;
 }
 
-/* 功能介绍区域 */
+.hero-actions :deep(.ant-btn-primary) {
+  background: white;
+  color: #667eea;
+  border: none;
+}
+
+.hero-actions :deep(.ant-btn-primary:hover) {
+  background: #f5f5f5;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.hero-actions :deep(.ant-btn:not(.ant-btn-primary)) {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.hero-actions :deep(.ant-btn:not(.ant-btn-primary):hover) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
 .features-section {
-  margin-bottom: 60px;
+  padding: 80px 20px;
+  background: #f5f5f5;
 }
 
 .section-title {
-  font-size: 28px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: #1e293b;
+  font-size: 36px;
+  font-weight: 700;
   text-align: center;
+  margin: 0 0 60px;
+  color: #1a1a1a;
 }
 
 .feature-card {
-  height: 100%;
-  background: rgba(255, 255, 255, 0.9);
+  margin-bottom: 24px;
   border-radius: 12px;
-  transition: transform 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+  transition: all 0.3s;
+  height: 100%;
 }
 
 .feature-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-8px);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* 响应式设计 */
+.feature-icon {
+  font-size: 64px;
+  text-align: center;
+  padding: 40px 0;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.feature-card :deep(.ant-card-meta-title) {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.feature-card :deep(.ant-card-meta-description) {
+  color: #666;
+}
+
 @media (max-width: 768px) {
   .hero-title {
     font-size: 32px;
   }
 
-  .hero-description {
+  .hero-subtitle {
     font-size: 16px;
   }
 }

@@ -22,7 +22,7 @@ spring:
       database: 0
       password:
 server:
-  port: 8080
+  port: 8567
   servlet:
     context-path: /api
     # cookie 30 天过期
