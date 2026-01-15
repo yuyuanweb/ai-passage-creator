@@ -1,0 +1,16 @@
+# 生产环境配置
+spring:
+  # MySQL 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://your-production-host:3306/my_db
+    username: your-username
+    password: your-password
+  # Redis 配置
+  data:
+    redis:
+      host: your-redis-host
+      port: 6379
+      database: 0
+      password: your-redis-password
+

@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: springboot-init
+  profiles:
+    active: local
+  # session 配置
+  session:
+    store-type: redis
+    # session 30 天过期
+    timeout: 2592000
+  # MySQL 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/my_db
+    username: root
+    password: 123456
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      password:
+server:
+  port: 8123
+  servlet:
+    context-path: /api
+    # cookie 30 天过期
+    session:
+      cookie:
+        max-age: 2592000
+# springdoc-openapi 配置
+springdoc:
+  group-configs:
+    - group: 'default'
+      paths-to-match: '/**'
+      packages-to-scan: com.yupi.template.controller
+# knife4j 接口文档配置
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn

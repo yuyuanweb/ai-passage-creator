@@ -1,0 +1,64 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+.DS_Store
+
+# Eclipse
+.classpath
+.project
+.settings/
+bin/
+
+# NetBeans
+nbproject/
+build/
+nbbuild/
+dist/
+nbdist/
+
+# VS Code
+.vscode/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Frontend build
+frontend/dist/
+frontend/.nuxt/
+frontend/.output/
+frontend/.cache/
+
+# Log files
+*.log
+logs/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Sensitive configuration
+src/main/resources/application-local.yml
+frontend/src/config/env.ts
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
