@@ -30,6 +30,11 @@ public enum ImageMethodEnum {
     MERMAID("MERMAID", "Mermaid 流程图生成", true, false),
 
     /**
+     * Iconify 图标库检索
+     */
+    ICONIFY("ICONIFY", "Iconify 图标库", false, false),
+
+    /**
      * Picsum 随机图片（降级方案）
      */
     PICSUM("PICSUM", "Picsum 随机图片", false, true);

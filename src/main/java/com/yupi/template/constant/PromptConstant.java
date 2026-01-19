@@ -97,14 +97,19 @@ public interface PromptConstant {
                - PEXELS: 适合真实场景、产品照片、人物照片、自然风景等写实图片
                - NANO_BANANA: 适合创意插画、信息图表、需要文字渲染、抽象概念、艺术风格等 AI 生成图片
                - MERMAID: 适合流程图、架构图、时序图、关系图、甘特图等结构化图表
+               - ICONIFY: 适合图标、符号、小型装饰性图标（如：箭头、勾选、星星、心形等）
             4. 对于 PEXELS 来源: 提供英文搜索关键词(keywords),要准确、具体
             5. 对于 NANO_BANANA 来源: 提供详细的英文生图提示词(prompt),描述场景、风格、细节
             6. 对于 MERMAID 来源: 
                - 分析文章内容，识别需要流程图的位置（如：工作流程、系统架构、数据流向等）
                - 在 prompt 字段生成完整的 Mermaid 代码
                - keywords 留空
-            7. sectionTitle 必须与正文中的章节标题完全一致(用于定位插入位置)
-            8. position=1 为封面图,sectionTitle 留空
+            7. 对于 ICONIFY 来源:
+               - 识别需要图标的位置（如：列表项标记、步骤指示、重点强调等）
+               - 提供英文图标关键词（keywords），如：check、arrow、star、heart
+               - prompt 留空
+            8. sectionTitle 必须与正文中的章节标题完全一致(用于定位插入位置)
+            9. position=1 为封面图,sectionTitle 留空
             
             请直接返回 JSON 格式,不要有其他内容:
             [
@@ -131,6 +136,14 @@ public interface PromptConstant {
                 "imageSource": "MERMAID",
                 "keywords": "",
                 "prompt": "flowchart TB\\n    A[用户请求] --> B[负载均衡]\\n    B --> C[应用服务器]\\n    C --> D[数据库]\\n    C --> E[缓存]"
+              },
+              {
+                "position": 4,
+                "type": "section",
+                "sectionTitle": "核心优势（与正文完全一致）",
+                "imageSource": "ICONIFY",
+                "keywords": "check circle",
+                "prompt": ""
               }
             ]
             """;
