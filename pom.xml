@@ -121,6 +121,12 @@
             <artifactId>gson</artifactId>
             <version>2.10.1</version>
         </dependency>
+        <!-- Google Gen AI Java SDK (Nano Banana 图片生成) -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.35.0</version>
+        </dependency>
         <!-- Jakarta Annotation API (替代 javax.annotation) -->
         <dependency>
             <groupId>jakarta.annotation</groupId>

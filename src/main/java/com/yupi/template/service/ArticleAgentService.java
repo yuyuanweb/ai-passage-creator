@@ -33,7 +33,7 @@ public class ArticleAgentService {
     private DashScopeChatModel chatModel;
 
     @Resource
-    private ImageSearchService imageSearchService;
+    private ImageServiceStrategy imageServiceStrategy;
 
     @Resource
     private CosService cosService;
@@ -144,24 +144,32 @@ public class ArticleAgentService {
     }
 
     /**
-     * 智能体5：生成配图（串行执行）
+     * 智能体5：生成配图（串行执行，支持混用多种配图方式）
      */
     private void agent5GenerateImages(ArticleState state, Consumer<String> streamHandler) {
         List<ArticleState.ImageResult> imageResults = new ArrayList<>();
         
         for (ArticleState.ImageRequirement requirement : state.getImageRequirements()) {
-            log.info("智能体5：开始检索配图, position={}, keywords={}", 
-                    requirement.getPosition(), requirement.getKeywords());
+            String imageSource = requirement.getImageSource();
+            log.info("智能体5：开始获取配图, position={}, imageSource={}, keywords={}", 
+                    requirement.getPosition(), imageSource, requirement.getKeywords());
             
-            // 调用图片检索服务
-            String imageUrl = imageSearchService.searchImage(requirement.getKeywords());
+            // 使用策略模式根据 imageSource 选择对应的图片服务
+            ImageServiceStrategy.ImageResult result = imageServiceStrategy.getImage(
+                    imageSource,
+                    requirement.getKeywords(),
+                    requirement.getPrompt()
+            );
+            
+            String imageUrl = result.getUrl();
+            ImageMethodEnum method = result.getMethod();
             
             // 降级策略
-            ImageMethodEnum method = imageSearchService.getMethod();
-            if (imageUrl == null) {
-                imageUrl = imageSearchService.getFallbackImage(requirement.getPosition());
+            if (!result.isSuccess()) {
+                imageUrl = imageServiceStrategy.getFallbackImage(requirement.getPosition());
                 method = ImageMethodEnum.PICSUM;
-                log.warn("智能体5：图片检索失败, 使用降级方案, position={}", requirement.getPosition());
+                log.warn("智能体5：图片获取失败, 使用降级方案, position={}, originalSource={}", 
+                        requirement.getPosition(), imageSource);
             }
             
             // 使用图片直接 URL（MVP 阶段不上传到 COS，简化流程）
@@ -175,7 +183,7 @@ public class ArticleAgentService {
             String imageCompleteMessage = SseMessageTypeEnum.IMAGE_COMPLETE.getStreamingPrefix() + GsonUtils.toJson(imageResult);
             streamHandler.accept(imageCompleteMessage);
             
-            log.info("智能体5：配图检索成功, position={}, method={}", 
+            log.info("智能体5：配图获取成功, position={}, method={}", 
                     requirement.getPosition(), method.getValue());
         }
         

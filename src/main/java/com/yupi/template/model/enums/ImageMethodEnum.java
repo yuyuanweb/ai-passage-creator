@@ -16,6 +16,11 @@ public enum ImageMethodEnum {
     PEXELS("PEXELS", "Pexels 图库"),
 
     /**
+     * Nano Banana AI 生图（Gemini 原生图片生成）
+     */
+    NANO_BANANA("NANO_BANANA", "Nano Banana AI 生图"),
+
+    /**
      * Picsum 随机图片（降级方案）
      */
     PICSUM("PICSUM", "Picsum 随机图片");
