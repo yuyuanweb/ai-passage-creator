@@ -5,6 +5,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.yupi.template.constant.PromptConstant;
 import com.yupi.template.model.dto.article.ArticleState;
+import com.yupi.template.model.dto.image.ImageRequest;
 import com.yupi.template.model.enums.ImageMethodEnum;
 import com.yupi.template.model.enums.SseMessageTypeEnum;
 import com.yupi.template.utils.GsonUtils;
@@ -154,23 +155,19 @@ public class ArticleAgentService {
             log.info("智能体5：开始获取配图, position={}, imageSource={}, keywords={}", 
                     requirement.getPosition(), imageSource, requirement.getKeywords());
             
+            // 构建图片请求对象
+            ImageRequest imageRequest = ImageRequest.builder()
+                    .keywords(requirement.getKeywords())
+                    .prompt(requirement.getPrompt())
+                    .position(requirement.getPosition())
+                    .type(requirement.getType())
+                    .build();
+            
             // 使用策略模式根据 imageSource 选择对应的图片服务
-            ImageServiceStrategy.ImageResult result = imageServiceStrategy.getImage(
-                    imageSource,
-                    requirement.getKeywords(),
-                    requirement.getPrompt()
-            );
+            ImageServiceStrategy.ImageResult result = imageServiceStrategy.getImage(imageSource, imageRequest);
             
             String imageUrl = result.getUrl();
             ImageMethodEnum method = result.getMethod();
-            
-            // 降级策略
-            if (!result.isSuccess()) {
-                imageUrl = imageServiceStrategy.getFallbackImage(requirement.getPosition());
-                method = ImageMethodEnum.PICSUM;
-                log.warn("智能体5：图片获取失败, 使用降级方案, position={}, originalSource={}", 
-                        requirement.getPosition(), imageSource);
-            }
             
             // 使用图片直接 URL（MVP 阶段不上传到 COS，简化流程）
             String finalImageUrl = cosService.useDirectUrl(imageUrl);

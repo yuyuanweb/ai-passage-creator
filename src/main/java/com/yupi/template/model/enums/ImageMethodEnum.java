@@ -4,6 +4,10 @@ import lombok.Getter;
 
 /**
  * 配图方式枚举
+ * 
+ * 扩展新的图片来源时，只需添加新的枚举值并设置正确的属性：
+ * - isAiGenerated: 是否为 AI 生图方式（决定使用 prompt 还是 keywords）
+ * - isFallback: 是否为降级方案
  *
  * @author <a href="https://codefather.cn">编程导航学习圈</a>
  */
@@ -13,17 +17,23 @@ public enum ImageMethodEnum {
     /**
      * Pexels 图库检索
      */
-    PEXELS("PEXELS", "Pexels 图库"),
+    PEXELS("PEXELS", "Pexels 图库", false, false),
 
     /**
      * Nano Banana AI 生图（Gemini 原生图片生成）
      */
-    NANO_BANANA("NANO_BANANA", "Nano Banana AI 生图"),
+    NANO_BANANA("NANO_BANANA", "Nano Banana AI 生图", true, false),
 
     /**
      * Picsum 随机图片（降级方案）
      */
-    PICSUM("PICSUM", "Picsum 随机图片");
+    PICSUM("PICSUM", "Picsum 随机图片", false, true);
+
+    // ============ 扩展示例 ============
+    // DALL_E("DALL_E", "DALL-E AI 生图", true, false),
+    // MIDJOURNEY("MIDJOURNEY", "Midjourney AI 生图", true, false),
+    // UNSPLASH("UNSPLASH", "Unsplash 图库", false, false),
+    // STABLE_DIFFUSION("STABLE_DIFFUSION", "Stable Diffusion AI 生图", true, false),
 
     /**
      * 方法值
@@ -35,9 +45,23 @@ public enum ImageMethodEnum {
      */
     private final String description;
 
-    ImageMethodEnum(String value, String description) {
+    /**
+     * 是否为 AI 生图方式
+     * true: 使用 prompt 生成图片（如 DALL-E、Midjourney、Nano Banana）
+     * false: 使用 keywords 检索图片（如 Pexels、Unsplash）
+     */
+    private final boolean aiGenerated;
+
+    /**
+     * 是否为降级方案
+     */
+    private final boolean fallback;
+
+    ImageMethodEnum(String value, String description, boolean aiGenerated, boolean fallback) {
         this.value = value;
         this.description = description;
+        this.aiGenerated = aiGenerated;
+        this.fallback = fallback;
     }
 
     /**
@@ -56,5 +80,26 @@ public enum ImageMethodEnum {
             }
         }
         return null;
+    }
+
+    /**
+     * 获取默认的图库检索方式
+     */
+    public static ImageMethodEnum getDefaultSearchMethod() {
+        return PEXELS;
+    }
+
+    /**
+     * 获取默认的 AI 生图方式
+     */
+    public static ImageMethodEnum getDefaultAiMethod() {
+        return NANO_BANANA;
+    }
+
+    /**
+     * 获取降级方案
+     */
+    public static ImageMethodEnum getFallbackMethod() {
+        return PICSUM;
     }
 }

@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
  * @author <a href="https://codefather.cn">编程导航学习圈</a>
  */
 @Configuration
-@ConfigurationProperties(prefix = "gemini")
+@ConfigurationProperties(prefix = "nano-banana")
 @Data
 public class NanoBananaConfig {
 
