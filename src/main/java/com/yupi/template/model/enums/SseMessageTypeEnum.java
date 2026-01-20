@@ -11,9 +11,14 @@ import lombok.Getter;
 public enum SseMessageTypeEnum {
 
     /**
-     * 智能体1完成（生成标题）
+     * 智能体1完成（生成标题方案）
      */
-    AGENT1_COMPLETE("AGENT1_COMPLETE", "标题生成完成"),
+    AGENT1_COMPLETE("AGENT1_COMPLETE", "标题方案生成完成"),
+    
+    /**
+     * 标题方案生成完成（等待用户选择）
+     */
+    TITLES_GENERATED("TITLES_GENERATED", "标题方案已生成"),
 
     /**
      * 智能体2流式输出（大纲）
@@ -24,6 +29,11 @@ public enum SseMessageTypeEnum {
      * 智能体2完成（生成大纲）
      */
     AGENT2_COMPLETE("AGENT2_COMPLETE", "大纲生成完成"),
+    
+    /**
+     * 大纲生成完成（等待用户编辑）
+     */
+    OUTLINE_GENERATED("OUTLINE_GENERATED", "大纲已生成"),
 
     /**
      * 智能体3流式输出（正文）

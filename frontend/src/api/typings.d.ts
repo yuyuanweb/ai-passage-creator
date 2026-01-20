@@ -1,4 +1,21 @@
 declare namespace API {
+  type ArticleAiModifyOutlineRequest = {
+    taskId?: string
+    modifySuggestion?: string
+  }
+
+  type ArticleConfirmOutlineRequest = {
+    taskId?: string
+    outline?: OutlineSection[]
+  }
+
+  type ArticleConfirmTitleRequest = {
+    taskId?: string
+    selectedMainTitle?: string
+    selectedSubTitle?: string
+    userDescription?: string
+  }
+
   type ArticleCreateRequest = {
     topic?: string
     style?: string
@@ -19,14 +36,17 @@ declare namespace API {
     taskId?: string
     userId?: number
     topic?: string
+    userDescription?: string
     mainTitle?: string
     subTitle?: string
+    titleOptions?: TitleOption[]
     outline?: OutlineItem[]
     content?: string
     fullContent?: string
     coverImage?: string
     images?: ImageItem[]
     status?: string
+    phase?: string
     errorMessage?: string
     createTime?: string
     completedTime?: string
@@ -41,6 +61,12 @@ declare namespace API {
   type BaseResponseBoolean = {
     code?: number
     data?: boolean
+    message?: string
+  }
+
+  type BaseResponseListOutlineSection = {
+    code?: number
+    data?: OutlineSection[]
     message?: string
   }
 
@@ -83,6 +109,12 @@ declare namespace API {
   type BaseResponseUserVO = {
     code?: number
     data?: UserVO
+    message?: string
+  }
+
+  type BaseResponseVoid = {
+    code?: number
+    data?: Record<string, any>
     message?: string
   }
 
@@ -133,6 +165,12 @@ declare namespace API {
     points?: string[]
   }
 
+  type OutlineSection = {
+    section?: number
+    title?: string
+    points?: string[]
+  }
+
   type PageArticleVO = {
     records?: ArticleVO[]
     pageNumber?: number
@@ -153,6 +191,11 @@ declare namespace API {
 
   type SseEmitter = {
     timeout?: number
+  }
+
+  type TitleOption = {
+    mainTitle?: string
+    subTitle?: string
   }
 
   type User = {

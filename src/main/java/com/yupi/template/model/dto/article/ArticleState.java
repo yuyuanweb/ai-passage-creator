@@ -24,9 +24,24 @@ public class ArticleState implements Serializable {
     private String topic;
 
     /**
+     * 用户补充描述
+     */
+    private String userDescription;
+
+    /**
      * 文章风格
      */
     private String style;
+
+    /**
+     * 当前阶段
+     */
+    private String phase;
+
+    /**
+     * 标题方案列表（智能体1输出）
+     */
+    private List<TitleOption> titleOptions;
 
     /**
      * 标题结果（智能体1输出）
@@ -62,6 +77,15 @@ public class ArticleState implements Serializable {
      * 允许的配图方式列表（为空表示支持所有方式）
      */
     private List<String> enabledImageMethods;
+
+    /**
+     * 标题方案
+     */
+    @Data
+    public static class TitleOption implements Serializable {
+        private String mainTitle;
+        private String subTitle;
+    }
 
     /**
      * 标题结果

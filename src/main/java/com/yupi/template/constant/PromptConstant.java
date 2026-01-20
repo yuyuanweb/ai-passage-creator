@@ -8,25 +8,37 @@ package com.yupi.template.constant;
 public interface PromptConstant {
 
     /**
-     * 智能体1：生成标题
+     * 智能体1：生成标题方案
      */
     String AGENT1_TITLE_PROMPT = """
             你是一位爆款文章标题专家,擅长创作吸引人的标题。
             
-            根据以下选题,生成一个爆款文章标题(主标题 + 副标题):
+            根据以下选题,生成 3-5 个爆款文章标题方案:
             选题：{topic}
             
             要求:
-            1. 主标题要包含数字、情绪化词汇,吸引眼球
-            2. 副标题要补充说明,增强吸引力
-            3. 标题要简洁有力,不超过30字
-            4. 符合新媒体爆款文章的风格
+            1. 每个方案包含主标题和副标题
+            2. 主标题要包含数字、情绪化词汇,吸引眼球
+            3. 副标题要补充说明,增强吸引力
+            4. 标题要简洁有力,不超过30字
+            5. 不同方案要有不同的切入角度
+            6. 符合新媒体爆款文章的风格
             
             请直接返回 JSON 格式,不要有其他内容:
-            {
-              "mainTitle": "主标题",
-              "subTitle": "副标题"
-            }
+            [
+              {
+                "mainTitle": "主标题1",
+                "subTitle": "副标题1"
+              },
+              {
+                "mainTitle": "主标题2",
+                "subTitle": "副标题2"
+              },
+              {
+                "mainTitle": "主标题3",
+                "subTitle": "副标题3"
+              }
+            ]
             """;
 
     /**
@@ -38,6 +50,7 @@ public interface PromptConstant {
             根据以下标题,生成文章大纲:
             主标题：{mainTitle}
             副标题：{subTitle}
+            {descriptionSection}
             
             要求:
             1. 大纲要有清晰的逻辑结构
@@ -55,6 +68,15 @@ public interface PromptConstant {
                 }
               ]
             }
+            """;
+
+    /**
+     * 用户补充描述部分（动态插入到 AGENT2_OUTLINE_PROMPT）
+     */
+    String AGENT2_DESCRIPTION_SECTION = """
+            
+            用户补充要求：{userDescription}
+            请在大纲中充分体现用户的补充要求。
             """;
 
     /**
@@ -262,6 +284,41 @@ public interface PromptConstant {
             - 适当自嘲或调侃，增加趣味性
             - 内容轻松易读，让读者在愉快中获取信息
             - 可加入一些有趣的段子或梗，但不失专业性
+            """;
+
+    /**
+     * AI 修改大纲 Prompt
+     */
+    String AI_MODIFY_OUTLINE_PROMPT = """
+            你是一位专业的文章策划师,擅长根据用户反馈优化文章结构。
+            
+            当前文章信息：
+            主标题：{mainTitle}
+            副标题：{subTitle}
+            
+            当前大纲：
+            {currentOutline}
+            
+            用户修改建议：
+            {modifySuggestion}
+            
+            要求：
+            1. 根据用户的修改建议，调整大纲结构
+            2. 保持大纲的逻辑性和完整性
+            3. 如果用户建议删除某章节，则删除；建议增加则增加；建议修改则修改
+            4. 保持 JSON 格式不变
+            5. 章节序号自动重新排序
+            
+            请直接返回修改后的 JSON 格式大纲，不要有其他内容：
+            {
+              "sections": [
+                {
+                  "section": 1,
+                  "title": "章节标题",
+                  "points": ["要点1", "要点2"]
+                }
+              ]
+            }
             """;
 
     // endregion

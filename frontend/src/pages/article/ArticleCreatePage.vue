@@ -39,8 +39,10 @@
 
       <!-- 中间：主内容区 -->
       <main ref="mainContentRef" class="main-content">
-        <!-- 输入状态 -->
-        <div v-if="!isCreating && !isCompleted" class="input-state">
+        <!-- 阶段切换（带过渡动画） -->
+        <Transition name="fade-slide" mode="out-in">
+          <!-- 输入状态 -->
+          <div v-if="currentPhase === 'INPUT'" key="input" class="input-state">
           <div class="input-card">
             <div class="input-header">
               <h1 class="input-title">创作新文章</h1>
@@ -107,10 +109,43 @@
               </div>
             </div>
           </div>
-        </div>
+          </div>
 
-        <!-- 创作进行中 -->
-        <div v-if="isCreating && !isCompleted" class="creating-state">
+          <!-- 标题生成中 -->
+          <div v-else-if="currentPhase === 'TITLE_GENERATING'" key="title-generating" class="loading-stage">
+            <a-spin size="large" />
+            <h3>AI 正在生成标题方案...</h3>
+            <p>稍等片刻，即将为您呈现多个精彩标题</p>
+          </div>
+
+          <!-- 标题选择阶段 -->
+          <TitleSelectingStage
+            v-else-if="currentPhase === 'TITLE_SELECTING'"
+            key="title-selecting"
+            :title-options="titleOptions"
+            :loading="confirmLoading"
+            @confirm="handleConfirmTitle"
+          />
+
+          <!-- 大纲生成中 -->
+          <div v-else-if="currentPhase === 'OUTLINE_GENERATING'" key="outline-generating" class="loading-stage">
+            <a-spin size="large" />
+            <h3>AI 正在规划文章大纲...</h3>
+            <p>正在为您构建清晰的文章结构</p>
+          </div>
+
+          <!-- 大纲编辑阶段 -->
+          <OutlineEditingStage
+            v-else-if="currentPhase === 'OUTLINE_EDITING'"
+            key="outline-editing"
+            :outline="outline"
+            :loading="confirmLoading"
+            :task-id="taskId"
+            @confirm="handleConfirmOutline"
+          />
+
+          <!-- 正文生成阶段 -->
+          <div v-else-if="currentPhase === 'CONTENT_GENERATING'" key="content-generating" class="creating-state">
           <!-- 标题预览 -->
           <div v-if="article.mainTitle" class="preview-header">
             <h1 class="article-title">{{ article.mainTitle }}</h1>
@@ -159,10 +194,10 @@
             <a-spin size="large" />
             <p>AI 正在构思标题...</p>
           </div>
-        </div>
+          </div>
 
-        <!-- 创作完成 -->
-        <div v-if="isCompleted" class="completed-state">
+          <!-- 创作完成 -->
+          <div v-else-if="currentPhase === 'COMPLETED'" key="completed" class="completed-state">
           <div class="success-header">
             <CheckCircleFilled class="success-icon" />
             <span>文章创作完成！</span>
@@ -175,13 +210,14 @@
           <div class="content-preview">
             <div v-html="markdownToHtml(article.fullContent || article.content)" class="markdown-body"></div>
           </div>
-        </div>
+          </div>
+        </Transition>
       </main>
 
       <!-- 右侧：辅助面板 -->
       <aside class="sidebar-right">
         <!-- 配额信息 -->
-        <div v-if="!isCreating && !isCompleted" class="panel-section quota-section">
+        <div v-if="currentPhase === 'INPUT'" class="panel-section quota-section">
           <h4 class="panel-title">
             <CrownOutlined />
             创作配额
@@ -207,7 +243,7 @@
         </div>
 
         <!-- 热门选题 -->
-        <div v-if="!isCreating && !isCompleted" class="panel-section">
+        <div v-if="currentPhase === 'INPUT'" class="panel-section">
           <h4 class="panel-title">
             <BulbOutlined />
             热门选题
@@ -225,7 +261,7 @@
         </div>
 
         <!-- 创作技巧 -->
-        <div v-if="!isCreating && !isCompleted" class="panel-section">
+        <div v-if="currentPhase === 'INPUT'" class="panel-section">
           <h4 class="panel-title">
             <StarOutlined />
             爆款技巧
@@ -256,7 +292,7 @@
         </div>
 
         <!-- 创作进行中的提示 -->
-        <div v-if="isCreating && !isCompleted" class="panel-section">
+        <div v-if="currentPhase === 'CONTENT_GENERATING' && isCreating" class="panel-section">
           <h4 class="panel-title">
             <ClockCircleOutlined />
             创作进度
@@ -278,7 +314,7 @@
         </div>
 
         <!-- 操作按钮 -->
-        <div v-if="isCompleted" class="panel-section">
+        <div v-if="currentPhase === 'COMPLETED'" class="panel-section">
           <h4 class="panel-title">
             <ThunderboltOutlined />
             快捷操作
@@ -300,7 +336,7 @@
         </div>
 
         <!-- 完成后的统计 -->
-        <div v-if="isCompleted" class="panel-section stats-section">
+        <div v-if="currentPhase === 'COMPLETED'" class="panel-section stats-section">
           <h4 class="panel-title">
             <BarChartOutlined />
             文章统计
@@ -368,9 +404,11 @@ import {
   WarningOutlined,
   CrownOutlined
 } from '@ant-design/icons-vue'
-import { createArticle } from '@/api/articleController'
+import { createArticle, confirmTitle, confirmOutline } from '@/api/articleController'
 import { connectSSE, closeSSE, type SSEMessage } from '@/utils/sse'
 import { marked } from 'marked'
+import TitleSelectingStage from './components/TitleSelectingStage.vue'
+import OutlineEditingStage from './components/OutlineEditingStage.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -401,6 +439,9 @@ const exampleTopics = [
   '健康饮食指南',
 ]
 
+// 阶段状态
+const currentPhase = ref<string>('INPUT')  // INPUT, TITLE_SELECTING, OUTLINE_EDITING, CONTENT_GENERATING, COMPLETED
+
 // 状态
 const topic = ref('')
 const selectedStyle = ref('')  // 选中的文章风格（空字符串表示默认）
@@ -413,6 +454,13 @@ const currentStep = ref(0)
 const taskId = ref('')
 const errorVisible = ref(false)
 const errorMessage = ref('')
+const confirmLoading = ref(false)
+
+// 标题方案
+const titleOptions = ref<Array<{mainTitle: string, subTitle: string}>>([])
+
+// 大纲数据
+const outline = ref<Array<{section: number, title: string, points: string[]}>>([])
 
 // 大纲数据（流式）
 const outlineRaw = ref('')
@@ -544,27 +592,42 @@ const handleSSEMessage = (msg: SSEMessage) => {
 
   switch (msg.type) {
     case 'AGENT1_COMPLETE':
-      // 标题生成完成，进入大纲步骤
+      // 智能体1完成，进入标题生成阶段（显示加载）
+      currentPhase.value = 'TITLE_GENERATING'
       currentStep.value = 1
-      article.value.mainTitle = msg.title?.mainTitle
-      article.value.subTitle = msg.title?.subTitle
+      break
+
+    case 'TITLES_GENERATED':
+      // 标题方案生成完成，切换到选择标题阶段
+      currentPhase.value = 'TITLE_SELECTING'
+      titleOptions.value = msg.titleOptions || []
+      isCreating.value = false
       break
 
     case 'AGENT2_STREAMING':
-      // 大纲流式输出
+      // 大纲流式输出（显示生成中状态）
+      currentPhase.value = 'OUTLINE_GENERATING'
       isOutlineStreaming.value = true
       outlineRaw.value += msg.content || ''
       scrollToBottom()
       break
 
-    case 'AGENT2_COMPLETE':
-      // 大纲完成，进入正文步骤
+    case 'OUTLINE_GENERATED':
+      // 大纲生成完成，切换到编辑大纲阶段
+      currentPhase.value = 'OUTLINE_EDITING'
+      outline.value = msg.outline || []
+      isCreating.value = false
       isOutlineStreaming.value = false
+      break
+
+    case 'AGENT2_COMPLETE':
+      // 大纲完成（内部处理，已在 OUTLINE_GENERATED 中切换阶段）
       currentStep.value = 2
       break
 
     case 'AGENT3_STREAMING':
       // 正文流式输出
+      currentPhase.value = 'CONTENT_GENERATING'
       isStreaming.value = true
       article.value.content += msg.content || ''
       scrollToBottom()
@@ -602,6 +665,7 @@ const handleSSEMessage = (msg: SSEMessage) => {
 
     case 'ALL_COMPLETE':
       // 全部完成
+      currentPhase.value = 'COMPLETED'
       currentStep.value = 6
       isCompleted.value = true
       message.success('文章创作完成!')
@@ -611,7 +675,44 @@ const handleSSEMessage = (msg: SSEMessage) => {
       errorMessage.value = msg.message || '创作失败'
       errorVisible.value = true
       isCreating.value = false
+      currentPhase.value = 'INPUT'
       break
+  }
+}
+
+// 确认标题
+const handleConfirmTitle = async (data: {mainTitle: string, subTitle: string, userDescription: string}) => {
+  confirmLoading.value = true
+  try {
+    await confirmTitle({
+      taskId: taskId.value,
+      selectedMainTitle: data.mainTitle,
+      selectedSubTitle: data.subTitle,
+      userDescription: data.userDescription
+    })
+    // 不直接切换阶段，等待 SSE 消息 OUTLINE_GENERATED
+    message.success('标题已确认，正在生成大纲...')
+  } catch (error: any) {
+    message.error(error.message || '确认标题失败')
+  } finally {
+    confirmLoading.value = false
+  }
+}
+
+// 确认大纲
+const handleConfirmOutline = async (outlineData: Array<{section: number, title: string, points: string[]}>) => {
+  confirmLoading.value = true
+  try {
+    await confirmOutline({
+      taskId: taskId.value,
+      outline: outlineData
+    })
+    // 不直接切换阶段，等待后端开始生成正文并推送 AGENT3_STREAMING
+    message.success('大纲已确认，正在生成正文...')
+  } catch (error: any) {
+    message.error(error.message || '确认大纲失败')
+  } finally {
+    confirmLoading.value = false
   }
 }
 
@@ -645,8 +746,11 @@ const viewArticle = () => {
 
 // 重新创作
 const resetCreate = () => {
+  currentPhase.value = 'INPUT'
   topic.value = ''
   selectedStyle.value = ''
+  titleOptions.value = []
+  outline.value = []
   isCreating.value = false
   isCompleted.value = false
   isStreaming.value = false
@@ -655,6 +759,7 @@ const resetCreate = () => {
   imageCount.value = 0
   imageProgress.value = 0
   outlineRaw.value = ''
+  confirmLoading.value = false
   article.value = {
     mainTitle: '',
     subTitle: '',
@@ -1499,6 +1604,22 @@ onBeforeUnmount(() => {
   }
 }
 
+/* 阶段切换过渡动画 */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateX(30px);
+}
+
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-30px);
+}
+
 /* 动画 */
 @keyframes blink {
   0%, 50% { opacity: 1; }
@@ -1513,6 +1634,29 @@ onBeforeUnmount(() => {
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
+}
+
+/* 加载阶段样式 */
+.loading-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 40px;
+  text-align: center;
+
+  h3 {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 24px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
 }
 
 /* 响应式 */
