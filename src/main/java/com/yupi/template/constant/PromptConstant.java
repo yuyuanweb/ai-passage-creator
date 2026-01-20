@@ -58,6 +58,40 @@ public interface PromptConstant {
             """;
 
     /**
+     * SVG 概念示意图生成 Prompt
+     */
+    String SVG_DIAGRAM_GENERATION_PROMPT = """
+            ### 背景 ###
+            你是一位资深的信息可视化设计师，擅长将抽象概念转化为直观易懂的 SVG 示意图。
+            你的作品曾用于知名媒体和技术文档，风格简洁现代、逻辑清晰。
+            
+            ### 需求 ###
+            {requirement}
+            
+            ### 任务步骤 ###
+            1. 分析需求：理解要表达的核心概念和逻辑关系
+            2. 设计布局：确定图形的整体结构（中心辐射、层级、流程等）
+            3. 选择元素：使用圆形、矩形、箭头、连线等基础图形
+            4. 配色美化：应用现代配色方案，确保视觉协调
+            5. 生成代码：输出完整规范的 SVG 代码
+            
+            ### 技术规范 ###
+            - 必须包含 <?xml version="1.0" encoding="UTF-8"?> 声明
+            - 必须设置 viewBox="0 0 800 600"，便于自适应缩放
+            - 字体使用 font-family="Arial, sans-serif"，确保跨平台兼容
+            - 使用语义化的 id 和 class 命名
+            
+            ### 设计风格 ###
+            - 配色：蓝色系为主（#4A90D9、#6BB3F0、#E8F4FC），辅以渐变效果
+            - 布局：留白充足，元素间距均匀，层次分明
+            - 文字：标签简洁，字号适中（14-18px），颜色对比清晰
+            - 连线：使用带箭头的线条表示方向和关系，线条粗细 2-3px
+            
+            ### 输出要求 ###
+            直接返回完整的 SVG XML 代码，不要有任何解释或其他内容。
+            """;
+
+    /**
      * 智能体3：生成正文
      */
     String AGENT3_CONTENT_PROMPT = """
@@ -99,6 +133,7 @@ public interface PromptConstant {
                - MERMAID: 适合流程图、架构图、时序图、关系图、甘特图等结构化图表
                - ICONIFY: 适合图标、符号、小型装饰性图标（如：箭头、勾选、星星、心形等）
                - EMOJI_PACK: 适合表情包、搞笑图片、轻松幽默的配图
+               - SVG_DIAGRAM: 适合概念示意图、思维导图样式、逻辑关系展示（不涉及精确数据）
             4. 对于 PEXELS 来源: 提供英文搜索关键词(keywords),要准确、具体
             5. 对于 NANO_BANANA 来源: 提供详细的英文生图提示词(prompt),描述场景、风格、细节
             6. 对于 MERMAID 来源: 
@@ -114,8 +149,13 @@ public interface PromptConstant {
                - 提供中文或英文关键词（keywords），描述表情内容，如：开心、哭笑、无语、疑问
                - prompt 留空
                - 系统会自动在关键词后添加"表情包"进行搜索
-            9. sectionTitle 必须与正文中的章节标题完全一致(用于定位插入位置)
-            10. position=1 为封面图,sectionTitle 留空
+            9. 对于 SVG_DIAGRAM 来源:
+               - 识别文章中需要展示概念、关系、逻辑的位置（不涉及精确数据）
+               - 在 prompt 字段描述示意图需求（中文），说明要表达的概念和关系
+               - keywords 留空
+               - 示例：绘制思维导图样式的图，中心是"自律"，周围4个分支：习惯、环境、反馈、系统
+            10. sectionTitle 必须与正文中的章节标题完全一致(用于定位插入位置)
+            11. position=1 为封面图,sectionTitle 留空
             
             请直接返回 JSON 格式,不要有其他内容:
             [
@@ -158,6 +198,14 @@ public interface PromptConstant {
                 "imageSource": "EMOJI_PACK",
                 "keywords": "疑问",
                 "prompt": ""
+              },
+              {
+                "position": 6,
+                "type": "section",
+                "sectionTitle": "核心理念（与正文完全一致）",
+                "imageSource": "SVG_DIAGRAM",
+                "keywords": "",
+                "prompt": "绘制概念示意图，中心圆形写'自律系统'，周围4个圆形分别是：习惯设计、环境优化、即时反馈、持续迭代，用箭头连接表示关系"
               }
             ]
             """;

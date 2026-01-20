@@ -63,4 +63,23 @@ public interface ArticleConstant {
     int BING_MAX_IMAGES = 30;
 
     // endregion
+
+    // region SVG 绘图相关常量
+
+    /**
+     * SVG 文件前缀
+     */
+    String SVG_FILE_PREFIX = "svg-chart";
+
+    /**
+     * SVG 默认宽度
+     */
+    int SVG_DEFAULT_WIDTH = 800;
+
+    /**
+     * SVG 默认高度
+     */
+    int SVG_DEFAULT_HEIGHT = 600;
+
+    // endregion
 }

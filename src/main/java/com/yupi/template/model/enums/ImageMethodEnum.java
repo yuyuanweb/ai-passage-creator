@@ -40,6 +40,11 @@ public enum ImageMethodEnum {
     EMOJI_PACK("EMOJI_PACK", "表情包检索", false, false),
 
     /**
+     * SVG 概念示意图生成（AI 生成 SVG 代码）
+     */
+    SVG_DIAGRAM("SVG_DIAGRAM", "SVG 概念示意图", true, false),
+
+    /**
      * Picsum 随机图片（降级方案）
      */
     PICSUM("PICSUM", "Picsum 随机图片", false, true);
