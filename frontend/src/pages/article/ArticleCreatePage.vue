@@ -127,11 +127,38 @@
             @confirm="handleConfirmTitle"
           />
 
-          <!-- 大纲生成中 -->
-          <div v-else-if="currentPhase === 'OUTLINE_GENERATING'" key="outline-generating" class="loading-stage">
-            <a-spin size="large" />
-            <h3>AI 正在规划文章大纲...</h3>
-            <p>正在为您构建清晰的文章结构</p>
+          <!-- 大纲生成中（流式展示） -->
+          <div v-else-if="currentPhase === 'OUTLINE_GENERATING'" key="outline-generating" class="outline-generating-state">
+            <!-- 标题预览 -->
+            <div v-if="article.mainTitle" class="preview-header">
+              <h1 class="article-title">{{ article.mainTitle }}</h1>
+              <p class="article-subtitle">{{ article.subTitle }}</p>
+            </div>
+
+            <!-- 大纲流式展示 -->
+            <div class="outline-preview">
+              <div class="section-label">
+                <BulbOutlined />
+                <span>AI 正在规划文章大纲</span>
+                <span class="typing-cursor">|</span>
+              </div>
+              <div v-if="parsedOutline.length > 0" class="outline-list">
+                <div
+                  v-for="item in parsedOutline"
+                  :key="item.section"
+                  class="outline-item fade-in"
+                >
+                  <div class="outline-title">{{ item.section }}. {{ item.title }}</div>
+                  <ul class="outline-points">
+                    <li v-for="(point, idx) in item.points" :key="idx">{{ point }}</li>
+                  </ul>
+                </div>
+              </div>
+              <div v-else class="outline-loading">
+                <a-spin />
+                <span>正在构建文章结构...</span>
+              </div>
+            </div>
           </div>
 
           <!-- 大纲编辑阶段 -->
@@ -695,6 +722,9 @@ const handleConfirmTitle = async (data: {mainTitle: string, subTitle: string, us
       selectedSubTitle: data.subTitle,
       userDescription: data.userDescription
     })
+    // 保存标题信息，用于大纲生成阶段展示
+    article.value.mainTitle = data.mainTitle
+    article.value.subTitle = data.subTitle
     // 不直接切换阶段，等待 SSE 消息 OUTLINE_GENERATED
     message.success('标题已确认，正在生成大纲...')
   } catch (error) {
@@ -1676,6 +1706,37 @@ onBeforeUnmount(() => {
     color: var(--color-text-secondary);
     margin: 0;
   }
+}
+
+/* 大纲生成中状态 */
+.outline-generating-state {
+  max-width: 100%;
+}
+
+.outline-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+
+/* 渐入动画 */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.4s ease-out;
 }
 
 /* 响应式 */
