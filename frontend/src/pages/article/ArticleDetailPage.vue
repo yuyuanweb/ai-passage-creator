@@ -9,12 +9,26 @@
             </template>
             返回
           </a-button>
-          <a-button type="primary" @click="exportMarkdown" class="export-btn">
-            <template #icon>
-              <DownloadOutlined />
-            </template>
-            导出 Markdown
-          </a-button>
+          <div class="right-actions">
+            <a-button
+              v-if="article?.status === 'FAILED'"
+              type="primary"
+              danger
+              @click="handleRetry"
+              class="retry-btn"
+            >
+              <template #icon>
+                <RedoOutlined />
+              </template>
+              重新创建
+            </a-button>
+            <a-button type="primary" @click="exportMarkdown" class="export-btn">
+              <template #icon>
+                <DownloadOutlined />
+              </template>
+              导出 Markdown
+            </a-button>
+          </div>
         </div>
       </div>
     </div>
@@ -27,14 +41,79 @@
             <h1 class="main-title">{{ article.mainTitle }}</h1>
             <p class="sub-title">{{ article.subTitle }}</p>
             <div class="meta-info">
-              <a-tag :color="getStatusColor(article.status)" class="status-tag">
-                {{ getStatusText(article.status) }}
+              <a-tag :color="getStatusColor(article.status ?? '')" class="status-tag">
+                {{ getStatusText(article.status ?? '') }}
               </a-tag>
-              <span class="time">创建于 {{ formatDate(article.createTime) }}</span>
+              <span class="time">创建于 {{ article.createTime ? formatDate(article.createTime) : '' }}</span>
             </div>
           </div>
 
           <a-divider />
+
+          <!-- 执行日志面板 -->
+          <div v-if="executionStats && executionStats.logs && executionStats.logs.length > 0" class="execution-logs-section">
+            <div class="logs-header" @click="showExecutionLogs = !showExecutionLogs">
+              <h2 class="section-title">
+                <ClockCircleOutlined class="section-icon" />
+                执行日志
+                <a-tag :color="getStatusColor(executionStats.overallStatus ?? '')" class="status-tag-small">
+                  {{ executionStats.overallStatus ?? '' }}
+                </a-tag>
+              </h2>
+              <ThunderboltOutlined :class="['toggle-icon', { expanded: showExecutionLogs }]" />
+            </div>
+
+            <Transition name="expand">
+              <div v-show="showExecutionLogs" class="logs-content">
+                <!-- 统计概览 -->
+                <div class="stats-summary">
+                  <div class="stat-item">
+                    <span class="label">总耗时</span>
+                    <span class="value">{{ executionStats.totalDurationMs ?? 0 }}ms</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">智能体数量</span>
+                    <span class="value">{{ executionStats.agentCount ?? 0 }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="label">平均耗时</span>
+                    <span class="value">
+                      {{ executionStats.agentCount && executionStats.totalDurationMs ? Math.round(executionStats.totalDurationMs / executionStats.agentCount) : 0 }}ms
+                    </span>
+                  </div>
+                </div>
+
+                <!-- 智能体时间线 -->
+                <div class="agent-timeline">
+                  <div
+                    v-for="log in executionStats.logs"
+                    :key="log.id"
+                    :class="['timeline-item', log.status?.toLowerCase()]"
+                  >
+                    <div class="timeline-indicator">
+                      <CheckCircleOutlined v-if="log.status === 'SUCCESS'" class="icon success" />
+                      <CloseCircleOutlined v-else-if="log.status === 'FAILED'" class="icon failed" />
+                      <LoadingOutlined v-else class="icon running" />
+                    </div>
+                    <div class="timeline-content">
+                      <div class="timeline-header">
+                        <span class="agent-name">{{ getAgentDisplayName(log.agentName ?? '') }}</span>
+                        <span class="duration">{{ log.durationMs ?? 0 }}ms</span>
+                      </div>
+                      <div class="timeline-time">
+                        {{ log.startTime ? formatDate(log.startTime) : '' }}
+                      </div>
+                      <div v-if="log.errorMessage" class="error-message">
+                        <CloseCircleOutlined /> {{ log.errorMessage }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Transition>
+          </div>
+
+          <a-divider v-if="executionStats && executionStats.logs && executionStats.logs.length > 0" />
 
           <!-- 大纲 -->
           <div v-if="article.outline && article.outline.length > 0" class="outline-section">
@@ -97,9 +176,21 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { ArrowLeftOutlined, DownloadOutlined, OrderedListOutlined, FileTextOutlined, PictureOutlined } from '@ant-design/icons-vue'
-import { getArticle } from '@/api/articleController'
+import { message, Modal } from 'ant-design-vue'
+import {
+  ArrowLeftOutlined,
+  DownloadOutlined,
+  OrderedListOutlined,
+  FileTextOutlined,
+  PictureOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  LoadingOutlined,
+  RedoOutlined,
+  ThunderboltOutlined
+} from '@ant-design/icons-vue'
+import { getArticle, getExecutionLogs } from '@/api/articleController'
 import { marked } from 'marked'
 import dayjs from 'dayjs'
 
@@ -108,6 +199,9 @@ const route = useRoute()
 
 const loading = ref(false)
 const article = ref<API.ArticleVO | null>(null)
+const executionStats = ref<API.AgentExecutionStats | null>(null)
+const logsLoading = ref(false)
+const showExecutionLogs = ref(false)
 
 // Markdown 转 HTML
 const markdownToHtml = (markdown: string) => {
@@ -125,11 +219,26 @@ const loadArticle = async () => {
   loading.value = true
   try {
     const res = await getArticle({ taskId })
-    article.value = res.data.data
-  } catch (error: any) {
-    message.error(error.message || '加载失败')
+    article.value = res.data.data || null
+    // 自动加载执行日志
+    await loadExecutionLogs(taskId)
+  } catch (error) {
+    message.error((error as Error).message || '加载失败')
   } finally {
     loading.value = false
+  }
+}
+
+// 加载执行日志
+const loadExecutionLogs = async (taskId: string) => {
+  logsLoading.value = true
+  try {
+    const res = await getExecutionLogs({ taskId })
+    executionStats.value = res.data.data || null
+  } catch (error) {
+    console.error('加载执行日志失败:', error)
+  } finally {
+    logsLoading.value = false
   }
 }
 
@@ -205,6 +314,40 @@ const getStatusText = (status: string) => {
   return textMap[status] || status
 }
 
+// 获取智能体显示名称
+const getAgentDisplayName = (agentName: string) => {
+  const nameMap: Record<string, string> = {
+    'agent1_generate_titles': '生成标题',
+    'agent2_generate_outline': '生成大纲',
+    'agent3_generate_content': '生成正文',
+    'agent4_analyze_image_requirements': '分析配图需求',
+    'agent5_generate_images': '生成配图',
+    'agent6_merge_content': '图文合成',
+    'ai_modify_outline': 'AI修改大纲'
+  }
+  return nameMap[agentName] || agentName
+}
+
+// 重试（重新创建文章）
+const handleRetry = () => {
+  if (!article.value) return
+
+  Modal.confirm({
+    title: '确认重试',
+    content: '将使用相同的选题和配置重新创建文章，是否继续？',
+    okText: '确认',
+    cancelText: '取消',
+    onOk: () => {
+      router.push({
+        path: '/create',
+        query: {
+          topic: article.value?.topic
+        }
+      })
+    }
+  })
+}
+
 onMounted(() => {
   loadArticle()
 })
@@ -233,6 +376,11 @@ onMounted(() => {
     align-items: center;
   }
 
+  .right-actions {
+    display: flex;
+    gap: 12px;
+  }
+
   .back-btn {
     background: white;
     border: 1px solid var(--color-border);
@@ -245,6 +393,21 @@ onMounted(() => {
       background: var(--color-background-secondary);
       border-color: var(--color-border);
       color: var(--color-text);
+    }
+  }
+
+  .retry-btn {
+    background: #ff4d4f;
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    transition: all var(--transition-fast);
+    border-radius: var(--radius-md);
+
+    &:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
     }
   }
 
@@ -329,6 +492,212 @@ onMounted(() => {
   .section-icon {
     font-size: 18px;
     color: var(--color-text-secondary);
+  }
+
+  .status-tag-small {
+    font-size: 11px;
+    padding: 2px 8px;
+    margin-left: 8px;
+  }
+
+  /* 执行日志部分 */
+  .execution-logs-section {
+    margin-bottom: 28px;
+    background: var(--color-background-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+
+    .logs-header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      .section-title {
+        margin: 0;
+        display: flex;
+        align-items: center;
+      }
+
+      .toggle-icon {
+        font-size: 14px;
+        color: var(--color-text-secondary);
+        transition: transform var(--transition-fast);
+
+        &.expanded {
+          transform: rotate(180deg);
+        }
+      }
+    }
+
+    .logs-content {
+      padding: 0 20px 20px;
+    }
+
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: white;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border-light);
+
+      .stat-item {
+        text-align: center;
+
+        .label {
+          display: block;
+          font-size: 12px;
+          color: var(--color-text-muted);
+          margin-bottom: 4px;
+        }
+
+        .value {
+          display: block;
+          font-size: 20px;
+          font-weight: 600;
+          color: var(--color-primary);
+        }
+      }
+    }
+
+    .agent-timeline {
+      position: relative;
+
+      &::before {
+        content: '';
+        position: absolute;
+        left: 16px;
+        top: 12px;
+        bottom: 12px;
+        width: 2px;
+        background: var(--color-border);
+      }
+
+      .timeline-item {
+        position: relative;
+        padding-left: 48px;
+        padding-bottom: 20px;
+
+        &:last-child {
+          padding-bottom: 0;
+        }
+
+        .timeline-indicator {
+          position: absolute;
+          left: 8px;
+          top: 2px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid var(--color-border);
+
+          .icon {
+            font-size: 12px;
+
+            &.success {
+              color: var(--color-success);
+            }
+
+            &.failed {
+              color: var(--color-error);
+            }
+
+            &.running {
+              color: var(--color-primary);
+            }
+          }
+        }
+
+        &.success .timeline-indicator {
+          border-color: var(--color-success);
+        }
+
+        &.failed .timeline-indicator {
+          border-color: var(--color-error);
+        }
+
+        .timeline-content {
+          background: white;
+          padding: 12px 16px;
+          border-radius: var(--radius-md);
+          border: 1px solid var(--color-border-light);
+
+          .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+
+            .agent-name {
+              font-size: 14px;
+              font-weight: 600;
+              color: var(--color-text);
+            }
+
+            .duration {
+              font-size: 13px;
+              font-weight: 600;
+              color: var(--color-primary);
+            }
+          }
+
+          .timeline-time {
+            font-size: 12px;
+            color: var(--color-text-muted);
+          }
+
+          .error-message {
+            margin-top: 8px;
+            padding: 8px;
+            background: rgba(255, 77, 79, 0.1);
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            color: var(--color-error);
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+
+            .anticon {
+              flex-shrink: 0;
+              margin-top: 2px;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* 展开/收起动画 */
+  .expand-enter-active,
+  .expand-leave-active {
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .expand-enter-from,
+  .expand-leave-to {
+    opacity: 0;
+    max-height: 0;
+  }
+
+  .expand-enter-to,
+  .expand-leave-from {
+    opacity: 1;
+    max-height: 2000px;
   }
 
   .outline-section {

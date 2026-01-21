@@ -117,17 +117,15 @@ import {
 } from '@ant-design/icons-vue'
 import { useLoginUserStore } from '@/stores/loginUser'
 import { createVipPaymentSession } from '@/api/paymentController'
-import { USER_ROLE_VIP } from '@/constants/user'
+import { isVip as checkIsVip } from '@/utils/permission'
 
 const router = useRouter()
 const route = useRoute()
 const loginUserStore = useLoginUserStore()
 const purchasing = ref(false)
 
-// 是否是 VIP
-const isVip = computed(() => {
-  return loginUserStore.loginUser.userRole === USER_ROLE_VIP
-})
+// 是否是 VIP（管理员也视为 VIP）
+const isVip = computed(() => checkIsVip(loginUserStore.loginUser))
 
 // 会员特权列表
 const features = [

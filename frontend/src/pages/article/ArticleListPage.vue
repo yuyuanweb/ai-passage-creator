@@ -33,14 +33,14 @@
               <SearchOutlined class="search-icon" />
             </template>
           </a-input-search>
-          
+
           <a-range-picker
             v-model:value="dateRange"
             :placeholder="['开始日期', '结束日期']"
             @change="handleDateChange"
             class="date-picker"
           />
-          
+
           <a-select
             v-model:value="statusFilter"
             placeholder="全部状态"
@@ -56,7 +56,7 @@
             <a-select-option value="FAILED">失败</a-select-option>
           </a-select>
         </div>
-        
+
         <div class="filter-right">
           <span class="total-count">共 {{ pagination.total }} 篇文章</span>
         </div>
@@ -98,7 +98,23 @@
                   <EyeOutlined />
                   查看
                 </a-button>
-                <a-button type="link" size="small" @click="exportArticle(record)" class="action-btn export-btn">
+                <a-button
+                  v-if="record.status === 'FAILED'"
+                  type="link"
+                  size="small"
+                  @click="retryArticle(record)"
+                  class="action-btn retry-btn"
+                >
+                  <RedoOutlined />
+                  重试
+                </a-button>
+                <a-button
+                  v-else
+                  type="link"
+                  size="small"
+                  @click="exportArticle(record)"
+                  class="action-btn export-btn"
+                >
                   <DownloadOutlined />
                   导出
                 </a-button>
@@ -138,14 +154,15 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { message } from 'ant-design-vue'
-import { 
-  PlusOutlined, 
-  SearchOutlined, 
-  EyeOutlined, 
-  DownloadOutlined, 
+import { message, Modal } from 'ant-design-vue'
+import {
+  PlusOutlined,
+  SearchOutlined,
+  EyeOutlined,
+  DownloadOutlined,
   DeleteOutlined,
-  FileTextOutlined
+  FileTextOutlined,
+  RedoOutlined
 } from '@ant-design/icons-vue'
 import { listArticle, deleteArticle as deleteArticleApi, getArticle } from '@/api/articleController'
 import dayjs, { type Dayjs } from 'dayjs'
@@ -196,6 +213,7 @@ const pagination = ref({
   showSizeChanger: true,
   showQuickJumper: true,
   showTotal: (total: number) => `共 ${total} 条`,
+  pageSizeOptions: ['10', '20', '50', '100']
 })
 
 // 加载数据
@@ -211,20 +229,20 @@ const loadData = async () => {
     })
     const pageData = res.data.data
     let records = pageData?.records || []
-    
+
     // 前端过滤（如果后端不支持）
     if (searchKeyword.value) {
       const keyword = searchKeyword.value.toLowerCase()
-      records = records.filter((item: API.ArticleVO) => 
+      records = records.filter((item: API.ArticleVO) =>
         item.mainTitle?.toLowerCase().includes(keyword) ||
         item.topic?.toLowerCase().includes(keyword)
       )
     }
-    
+
     if (statusFilter.value) {
       records = records.filter((item: API.ArticleVO) => item.status === statusFilter.value)
     }
-    
+
     if (dateRange.value) {
       const [start, end] = dateRange.value
       records = records.filter((item: API.ArticleVO) => {
@@ -232,7 +250,7 @@ const loadData = async () => {
         return createTime.isAfter(start.startOf('day')) && createTime.isBefore(end.endOf('day'))
       })
     }
-    
+
     dataSource.value = records
     pagination.value.total = pageData?.totalRow || 0
   } catch (error: any) {
@@ -280,7 +298,7 @@ const viewArticle = (record: API.ArticleVO) => {
 // 导出文章
 const exportArticle = async (record: API.ArticleVO) => {
   try {
-    const res = await getArticle(record.taskId)
+    const res = await getArticle({ taskId: record.taskId || '' })
     const article = res.data.data
     if (!article) {
       message.error('文章数据不存在')
@@ -289,7 +307,7 @@ const exportArticle = async (record: API.ArticleVO) => {
 
     let markdown = `# ${article.mainTitle}\n\n`
     markdown += `> ${article.subTitle}\n\n`
-    
+
     if (article.fullContent) {
       markdown += article.fullContent
     } else {
@@ -303,22 +321,41 @@ const exportArticle = async (record: API.ArticleVO) => {
     a.download = `${article.mainTitle || '文章'}.md`
     a.click()
     URL.revokeObjectURL(url)
-    
+
     message.success('导出成功')
-  } catch (error: any) {
-    message.error(error.message || '导出失败')
+  } catch (error) {
+    message.error((error as Error).message || '导出失败')
   }
 }
 
 // 删除文章
 const deleteArticle = async (record: API.ArticleVO) => {
   try {
-    await deleteArticleApi(record.id)
+    await deleteArticleApi({ id: record.id })
     message.success('删除成功')
     loadData()
-  } catch (error: any) {
-    message.error(error.message || '删除失败')
+  } catch (error) {
+    message.error((error as Error).message || '删除失败')
   }
+}
+
+// 重试文章（重新创建）
+const retryArticle = (record: API.ArticleVO) => {
+  Modal.confirm({
+    title: '确认重试',
+    content: `将使用相同的选题"${record.topic}"重新创建文章，是否继续？`,
+    okText: '确认',
+    cancelText: '取消',
+    onOk: () => {
+      router.push({
+        path: '/create',
+        query: {
+          topic: record.topic || '',
+          style: record.userDescription || ''
+        }
+      })
+    }
+  })
 }
 
 // 跳转创作页面
@@ -438,7 +475,10 @@ onMounted(() => {
 
   .search-input {
     :deep(.ant-input-affix-wrapper) {
-      border-radius: var(--radius-md);
+      border-top-left-radius: var(--radius-md);
+      border-bottom-left-radius: var(--radius-md);
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
       border-color: var(--color-border);
 
       &:hover, &:focus {
@@ -542,13 +582,13 @@ onMounted(() => {
     border-radius: var(--radius-full);
     font-size: 12px;
     font-weight: 500;
-    
+
     .status-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
     }
-    
+
     &.status-completed {
       background: rgba(34, 197, 94, 0.1);
       color: var(--color-primary-dark);
@@ -557,7 +597,7 @@ onMounted(() => {
         background: var(--color-primary);
       }
     }
-    
+
     &.status-processing {
       background: rgba(59, 130, 246, 0.1);
       color: #2563EB;
@@ -567,7 +607,7 @@ onMounted(() => {
         animation: pulse 1.5s infinite;
       }
     }
-    
+
     &.status-pending {
       background: var(--color-background-tertiary);
       color: var(--color-text-secondary);
@@ -576,7 +616,7 @@ onMounted(() => {
         background: var(--color-text-muted);
       }
     }
-    
+
     &.status-failed {
       background: rgba(239, 68, 68, 0.1);
       color: #DC2626;
@@ -606,23 +646,31 @@ onMounted(() => {
     align-items: center;
     gap: 4px;
     transition: all var(--transition-fast);
-    
+
     &.view-btn {
       color: var(--color-primary);
-      
+
       &:hover {
         color: var(--color-primary-dark);
       }
     }
-    
+
+    &.retry-btn {
+      color: #ff4d4f;
+
+      &:hover {
+        color: #DC2626;
+      }
+    }
+
     &.export-btn {
       color: var(--color-text-secondary);
-      
+
       &:hover {
         color: var(--color-text);
       }
     }
-    
+
     &.delete-btn {
       &:hover {
         color: #DC2626;

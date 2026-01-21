@@ -17,7 +17,9 @@ import com.yupi.template.model.dto.article.ArticleState;
 import java.util.List;
 import com.yupi.template.model.entity.User;
 import com.yupi.template.model.enums.ArticleStyleEnum;
+import com.yupi.template.model.vo.AgentExecutionStats;
 import com.yupi.template.model.vo.ArticleVO;
+import com.yupi.template.service.AgentLogService;
 import com.yupi.template.service.ArticleAsyncService;
 import com.yupi.template.service.ArticleService;
 import com.yupi.template.service.UserService;
@@ -50,6 +52,9 @@ public class ArticleController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private AgentLogService agentLogService;
 
     /**
      * 创建文章任务
@@ -232,5 +237,18 @@ public class ArticleController {
         );
 
         return ResultUtils.success(modifiedOutline);
+    }
+
+    /**
+     * 获取任务执行日志
+     */
+    @GetMapping("/execution-logs/{taskId}")
+    @Operation(summary = "获取任务执行日志")
+    public BaseResponse<AgentExecutionStats> getExecutionLogs(@PathVariable String taskId) {
+        ThrowUtils.throwIf(taskId == null || taskId.trim().isEmpty(), 
+                ErrorCode.PARAMS_ERROR, "任务ID不能为空");
+        
+        AgentExecutionStats stats = agentLogService.getExecutionStats(taskId);
+        return ResultUtils.success(stats);
     }
 }

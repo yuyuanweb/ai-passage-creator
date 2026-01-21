@@ -139,7 +139,7 @@ import { message } from 'ant-design-vue'
 import Sortable from 'sortablejs'
 import { aiModifyOutline } from '@/api/articleController'
 import { useLoginUserStore } from '@/stores/loginUser'
-import { USER_ROLE_VIP } from '@/constants/user'
+import { isVip as checkIsVip } from '@/utils/permission'
 
 interface OutlineSection {
   section: number
@@ -165,10 +165,8 @@ const emit = defineEmits<Emits>()
 
 const loginUserStore = useLoginUserStore()
 
-// 判断是否为 VIP
-const isVip = computed(() => {
-  return loginUserStore.loginUser.userRole === USER_ROLE_VIP
-})
+// 判断是否为 VIP（管理员也视为 VIP）
+const isVip = computed(() => checkIsVip(loginUserStore.loginUser))
 
 // 转换 API 类型为内部类型
 const outlineSections = ref<OutlineSection[]>(

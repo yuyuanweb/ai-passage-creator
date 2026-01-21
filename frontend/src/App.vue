@@ -1,9 +1,16 @@
 <script setup lang="ts">
+import { provide } from 'vue'
 import BasicLayout from '@/layouts/BasicLayout.vue'
+import zhCN from 'ant-design-vue/es/locale/zh_CN'
+
+// 提供全局中文语言配置
+provide('locale', zhCN)
 </script>
 
 <template>
-  <BasicLayout />
+  <a-config-provider :locale="zhCN">
+    <BasicLayout />
+  </a-config-provider>
 </template>
 
 <style>
@@ -18,14 +25,14 @@ import BasicLayout from '@/layouts/BasicLayout.vue'
   --color-primary-dark: #16A34A;
   --color-secondary: #0F172A;
   --color-secondary-light: #334155;
-  
+
   /* 功能色 */
   --color-cta: #22C55E;
   --color-success: #22C55E;
   --color-warning: #EAB308;
   --color-error: #EF4444;
   --color-info: #3B82F6;
-  
+
   /* 中性色 */
   --color-background: #FFFFFF;
   --color-background-secondary: #F8FAFC;
@@ -36,19 +43,19 @@ import BasicLayout from '@/layouts/BasicLayout.vue'
   --color-text-muted: #94A3B8;
   --color-border: #E2E8F0;
   --color-border-light: #F1F5F9;
-  
+
   /* 渐变 */
   --gradient-primary: linear-gradient(135deg, #22C55E 0%, #16A34A 100%);
   --gradient-hero: linear-gradient(180deg, #DCFCE7 0%, #FFFFFF 100%);
   --gradient-hero-dark: linear-gradient(180deg, #166534 0%, #14532D 100%);
-  
+
   /* 纯色背景 */
   --bg-primary: #22C55E;
   --bg-primary-hover: #16A34A;
   --bg-dark: #0F172A;
   --bg-dark-hover: #1E293B;
   --bg-success: #22C55E;
-  
+
   /* 阴影 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -57,7 +64,7 @@ import BasicLayout from '@/layouts/BasicLayout.vue'
   --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-card-hover: 0 8px 24px rgba(34, 197, 94, 0.15);
   --shadow-green: 0 4px 14px rgba(34, 197, 94, 0.25);
-  
+
   /* 圆角 */
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -65,12 +72,12 @@ import BasicLayout from '@/layouts/BasicLayout.vue'
   --radius-xl: 16px;
   --radius-2xl: 24px;
   --radius-full: 9999px;
-  
+
   /* 过渡 */
   --transition-fast: 150ms ease-out;
   --transition-normal: 200ms ease-out;
   --transition-slow: 300ms ease-out;
-  
+
   /* 毛玻璃 */
   --glass-bg: rgba(255, 255, 255, 0.9);
   --glass-bg-green: rgba(220, 252, 231, 0.8);
