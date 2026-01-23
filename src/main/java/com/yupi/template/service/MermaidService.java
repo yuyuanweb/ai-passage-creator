@@ -4,6 +4,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RuntimeUtil;
 import cn.hutool.system.SystemUtil;
 import com.yupi.template.config.MermaidConfig;
+import com.yupi.template.model.dto.image.ImageData;
 import com.yupi.template.model.dto.image.ImageRequest;
 import com.yupi.template.model.enums.ImageMethodEnum;
 import lombok.extern.slf4j.Slf4j;
@@ -27,29 +28,36 @@ public class MermaidService implements ImageSearchService {
     @Resource
     private MermaidConfig mermaidConfig;
 
-    @Resource
-    private CosService cosService;
-
     @Override
     public String searchImage(String keywords) {
         // 对于 Mermaid，keywords 就是 Mermaid 代码
-        return generateDiagram(keywords);
+        // 此方法已废弃，请使用 getImageData()
+        ImageData imageData = generateDiagramData(keywords);
+        // 返回 null，因为不再直接返回 URL
+        return null;
     }
 
     @Override
     public String getImage(ImageRequest request) {
+        // 此方法已废弃，请使用 getImageData()
+        // 返回 null，上传逻辑由 ImageServiceStrategy 统一处理
+        return null;
+    }
+
+    @Override
+    public ImageData getImageData(ImageRequest request) {
         // 优先使用 prompt（Mermaid 代码），否则使用 keywords
         String mermaidCode = request.getEffectiveParam(true);
-        return generateDiagram(mermaidCode);
+        return generateDiagramData(mermaidCode);
     }
 
     /**
-     * 生成 Mermaid 图表
+     * 生成 Mermaid 图表数据
      *
      * @param mermaidCode Mermaid 代码
-     * @return 图片 URL，生成失败返回 null
+     * @return 图片字节数据，生成失败返回 null
      */
-    public String generateDiagram(String mermaidCode) {
+    public ImageData generateDiagramData(String mermaidCode) {
         if (mermaidCode == null || mermaidCode.trim().isEmpty()) {
             log.warn("Mermaid 代码为空");
             return null;
@@ -76,16 +84,12 @@ public class MermaidService implements ImageSearchService {
                 return null;
             }
 
-            // 上传到 COS
-            String cosUrl = cosService.uploadFile(tempOutputFile, "mermaid");
+            // 读取图片字节数据
+            byte[] imageBytes = FileUtil.readBytes(tempOutputFile);
+            String mimeType = getMimeType(mermaidConfig.getOutputFormat());
             
-            if (cosUrl != null && !cosUrl.isEmpty()) {
-                log.info("Mermaid 图表生成成功, url={}", cosUrl);
-                return cosUrl;
-            } else {
-                log.error("上传 Mermaid 图表到 COS 失败");
-                return null;
-            }
+            log.info("Mermaid 图表生成成功, size={} bytes", imageBytes.length);
+            return ImageData.fromBytes(imageBytes, mimeType);
 
         } catch (Exception e) {
             log.error("Mermaid 图表生成异常", e);
@@ -99,6 +103,18 @@ public class MermaidService implements ImageSearchService {
                 FileUtil.del(tempOutputFile);
             }
         }
+    }
+
+    /**
+     * 根据输出格式获取 MIME 类型
+     */
+    private String getMimeType(String format) {
+        return switch (format.toLowerCase()) {
+            case "png" -> "image/png";
+            case "svg" -> "image/svg+xml";
+            case "pdf" -> "application/pdf";
+            default -> "image/png";
+        };
     }
 
     /**

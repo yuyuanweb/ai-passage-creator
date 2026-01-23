@@ -6,6 +6,8 @@ import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.ImageConfig;
 import com.google.genai.types.Part;
 import com.yupi.template.config.NanoBananaConfig;
+import com.yupi.template.model.dto.image.ImageData;
+import com.yupi.template.model.dto.image.ImageRequest;
 import com.yupi.template.model.enums.ImageMethodEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,22 +29,26 @@ public class NanoBananaService implements ImageSearchService {
     @Resource
     private NanoBananaConfig nanoBananaConfig;
 
-    @Resource
-    private CosService cosService;
-
     @Override
     public String searchImage(String keywords) {
-        // 对于 Nano Banana，keywords 就是生图 prompt
-        return generateImage(keywords);
+        // 此方法已废弃，请使用 getImageData()
+        // 返回 null，上传逻辑由 ImageServiceStrategy 统一处理
+        return null;
+    }
+
+    @Override
+    public ImageData getImageData(ImageRequest request) {
+        String prompt = request.getEffectiveParam(true);
+        return generateImageData(prompt);
     }
 
     /**
-     * 根据提示词生成图片
+     * 根据提示词生成图片数据
      *
      * @param prompt 生图提示词
-     * @return 图片 URL，生成失败返回 null
+     * @return ImageData 包含图片字节数据，生成失败返回 null
      */
-    public String generateImage(String prompt) {
+    public ImageData generateImageData(String prompt) {
         try {
             // 使用 Builder 显式设置 API Key
             Client genaiClient = Client.builder()
@@ -86,8 +92,7 @@ public class NanoBananaService implements ImageSearchService {
                                 log.info("Nano Banana 图片生成成功, size={} bytes, mimeType={}", 
                                         imageBytes.length, mimeType);
                                 
-                                // 上传图片到 COS 并返回 URL
-                                return uploadImageToCos(imageBytes, mimeType);
+                                return ImageData.fromBytes(imageBytes, mimeType);
                             }
                         }
                     }
@@ -101,37 +106,6 @@ public class NanoBananaService implements ImageSearchService {
             }
         } catch (Exception e) {
             log.error("Nano Banana 生成图片异常, prompt={}", prompt, e);
-            return null;
-        }
-    }
-
-    /**
-     * 上传图片字节数据到 COS
-     *
-     * @param imageBytes 图片字节数据
-     * @param mimeType   图片 MIME 类型
-     * @return COS 图片 URL
-     */
-    private String uploadImageToCos(byte[] imageBytes, String mimeType) {
-        try {
-            // 生成临时文件名
-            String extension = mimeType.contains("jpeg") || mimeType.contains("jpg") ? ".jpg" : ".png";
-            String fileName = "nano-banana/" + System.currentTimeMillis() + "_" + 
-                    java.util.UUID.randomUUID().toString().substring(0, 8) + extension;
-
-            // 使用 CosService 上传（需要先转换为 URL 或直接上传字节）
-            // 由于 CosService 目前只支持 URL 下载上传，这里直接使用 base64 data URL
-            // 或者扩展 CosService 支持字节上传
-            
-            // 临时方案：将图片转为 base64 data URL（前端可直接使用）
-            String base64 = java.util.Base64.getEncoder().encodeToString(imageBytes);
-            String dataUrl = "data:" + mimeType + ";base64," + base64;
-            
-            log.info("Nano Banana 图片已生成 Data URL, length={}", dataUrl.length());
-            return dataUrl;
-            
-        } catch (Exception e) {
-            log.error("上传 Nano Banana 图片失败", e);
             return null;
         }
     }

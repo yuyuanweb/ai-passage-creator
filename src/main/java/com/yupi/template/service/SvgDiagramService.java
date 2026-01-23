@@ -1,10 +1,11 @@
 package com.yupi.template.service;
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.cloud.ai.dashscope.chat.DashScopeChatModel;
 import com.yupi.template.config.SvgDiagramConfig;
 import com.yupi.template.constant.PromptConstant;
+import com.yupi.template.model.dto.image.ImageData;
+import com.yupi.template.model.dto.image.ImageRequest;
 import com.yupi.template.model.enums.ImageMethodEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.messages.UserMessage;
@@ -13,7 +14,7 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
-import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import static com.yupi.template.constant.ArticleConstant.PICSUM_URL_TEMPLATE;
 
@@ -33,28 +34,30 @@ public class SvgDiagramService implements ImageSearchService {
     @Resource
     private DashScopeChatModel chatModel;
 
-    @Resource
-    private CosService cosService;
-
     @Override
     public String searchImage(String keywords) {
-        // keywords 是图表需求描述
-        return generateSvgDiagram(keywords);
+        // 此方法已废弃，请使用 getImageData()
+        // 返回 null，上传逻辑由 ImageServiceStrategy 统一处理
+        return null;
+    }
+
+    @Override
+    public ImageData getImageData(ImageRequest request) {
+        String requirement = request.getEffectiveParam(true);
+        return generateSvgDiagramData(requirement);
     }
 
     /**
-     * 生成 SVG 概念示意图
+     * 生成 SVG 概念示意图数据
      *
      * @param requirement 示意图需求描述
-     * @return 图片 URL，生成失败返回 null
+     * @return ImageData 包含 SVG 字节数据，生成失败返回 null
      */
-    public String generateSvgDiagram(String requirement) {
+    public ImageData generateSvgDiagramData(String requirement) {
         if (StrUtil.isBlank(requirement)) {
             log.warn("SVG 图表需求为空");
             return null;
         }
-
-        File tempFile = null;
 
         try {
             // 1. 调用 LLM 生成 SVG 代码
@@ -71,31 +74,15 @@ public class SvgDiagramService implements ImageSearchService {
                 return null;
             }
 
-            // 3. 保存为临时文件
-            tempFile = FileUtil.createTempFile("svg_chart_", ".svg", true);
-            FileUtil.writeUtf8String(svgCode, tempFile);
-
-            log.info("SVG 代码已保存到临时文件, size={}", tempFile.length());
-
-            // 4. 上传到 COS
-            String cosUrl = cosService.uploadFile(tempFile, svgDiagramConfig.getFolder());
-
-            if (cosUrl != null && !cosUrl.isEmpty()) {
-                log.info("SVG 概念示意图生成成功, url={}", cosUrl);
-                return cosUrl;
-            } else {
-                log.error("上传 SVG 概念示意图到 COS 失败");
-                return null;
-            }
+            // 3. 转换为字节数据
+            byte[] svgBytes = svgCode.getBytes(StandardCharsets.UTF_8);
+            
+            log.info("SVG 概念示意图生成成功, size={} bytes", svgBytes.length);
+            return ImageData.fromBytes(svgBytes, "image/svg+xml");
 
         } catch (Exception e) {
             log.error("SVG 概念示意图生成异常, requirement={}", requirement, e);
             return null;
-        } finally {
-            // 清理临时文件
-            if (tempFile != null) {
-                FileUtil.del(tempFile);
-            }
         }
     }
 
