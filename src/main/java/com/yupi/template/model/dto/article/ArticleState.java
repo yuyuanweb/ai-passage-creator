@@ -107,6 +107,10 @@ public class ArticleState implements Serializable {
          * AI 生图提示词（当 imageSource 为 NANO_BANANA 时使用）
          */
         private String prompt;
+        /**
+         * 占位符ID，用于在正文中定位插入位置，格式：{{IMAGE_PLACEHOLDER_N}}
+         */
+        private String placeholderId;
     }
 
     /**
@@ -120,6 +124,25 @@ public class ArticleState implements Serializable {
         private String keywords;
         private String sectionTitle;
         private String description;
+        /**
+         * 占位符ID，用于在正文中定位插入位置
+         */
+        private String placeholderId;
+    }
+
+    /**
+     * 智能体4返回结果（包含带占位符的正文和配图需求列表）
+     */
+    @Data
+    public static class Agent4Result implements Serializable {
+        /**
+         * 包含占位符的正文内容
+         */
+        private String contentWithPlaceholders;
+        /**
+         * 配图需求列表
+         */
+        private List<ImageRequirement> imageRequirements;
     }
 
     /**

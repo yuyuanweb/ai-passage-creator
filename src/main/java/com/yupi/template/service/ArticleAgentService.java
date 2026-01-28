@@ -128,7 +128,7 @@ public class ArticleAgentService {
     }
 
     /**
-     * 智能体4：分析配图需求
+     * 智能体4：分析配图需求（在正文中插入占位符）
      */
     private void agent4AnalyzeImageRequirements(ArticleState state) {
         // 构建可用配图方式说明
@@ -140,13 +140,17 @@ public class ArticleAgentService {
                 .replace("{availableMethods}", availableMethods);
 
         String content = callLlm(prompt);
-        List<ArticleState.ImageRequirement> imageRequirements = parseJsonListResponse(
+        ArticleState.Agent4Result agent4Result = parseJsonResponse(
                 content, 
-                new TypeToken<List<ArticleState.ImageRequirement>>(){}, 
+                ArticleState.Agent4Result.class, 
                 "配图需求"
         );
-        state.setImageRequirements(imageRequirements);
-        log.info("智能体4：配图需求分析成功, count={}", imageRequirements.size());
+        
+        // 更新正文为包含占位符的版本
+        state.setContent(agent4Result.getContentWithPlaceholders());
+        state.setImageRequirements(agent4Result.getImageRequirements());
+        log.info("智能体4：配图需求分析成功, count={}, 已在正文中插入占位符", 
+                agent4Result.getImageRequirements().size());
     }
 
     /**
@@ -191,7 +195,7 @@ public class ArticleAgentService {
     }
 
     /**
-     * 图文合成：将配图插入正文对应位置
+     * 图文合成：根据占位符将配图插入正文
      */
     private void mergeImagesIntoContent(ArticleState state) {
         String content = state.getContent();
@@ -202,21 +206,18 @@ public class ArticleAgentService {
             return;
         }
 
-        StringBuilder fullContent = new StringBuilder();
+        String fullContent = content;
         
-        // 按行处理正文，在章节标题后插入对应图片
-        String[] lines = content.split("\n");
-        for (String line : lines) {
-            fullContent.append(line).append("\n");
-            
-            // 检查是否是章节标题（以 ## 开头）
-            if (line.startsWith("## ")) {
-                String sectionTitle = line.substring(3).trim();
-                insertImageAfterSection(fullContent, images, sectionTitle);
+        // 遍历所有配图，根据占位符替换为实际图片
+        for (ArticleState.ImageResult image : images) {
+            String placeholder = image.getPlaceholderId();
+            if (placeholder != null && !placeholder.isEmpty()) {
+                String imageMarkdown = "![" + image.getDescription() + "](" + image.getUrl() + ")";
+                fullContent = fullContent.replace(placeholder, imageMarkdown);
             }
         }
         
-        state.setFullContent(fullContent.toString());
+        state.setFullContent(fullContent);
         log.info("图文合成完成, fullContentLength={}", fullContent.length());
     }
 
@@ -289,24 +290,8 @@ public class ArticleAgentService {
         imageResult.setKeywords(requirement.getKeywords());
         imageResult.setSectionTitle(requirement.getSectionTitle());
         imageResult.setDescription(requirement.getType());
+        imageResult.setPlaceholderId(requirement.getPlaceholderId());
         return imageResult;
-    }
-
-    /**
-     * 在章节标题后插入对应图片
-     */
-    private void insertImageAfterSection(StringBuilder fullContent, 
-                                          List<ArticleState.ImageResult> images, 
-                                          String sectionTitle) {
-        for (ArticleState.ImageResult image : images) {
-            if (image.getPosition() > 1 && 
-                image.getSectionTitle() != null && 
-                sectionTitle.contains(image.getSectionTitle().trim())) {
-                fullContent.append("\n![").append(image.getDescription())
-                        .append("](").append(image.getUrl()).append(")\n");
-                break;
-            }
-        }
     }
 
     /**
