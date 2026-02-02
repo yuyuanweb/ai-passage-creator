@@ -1,0 +1,23 @@
+# 配置文件（包含敏感信息）
+config.yaml
+config.local.yaml
+
+# IDE
+.idea/
+.vscode/
+
+# 编译产物
+bin/
+*.exe
+/go-backend
+
+# 依赖
+vendor/
+
+# 日志
+logs/
+*.log
+
+# 临时文件
+tmp/
+temp/

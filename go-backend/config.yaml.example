@@ -1,0 +1,30 @@
+# 配置文件示例
+# 使用说明：将此文件复制为 config.yaml，并填写实际的配置值
+# 注意：config.yaml 已在 .gitignore 中，不会被提交到 Git
+
+server:
+  port: 8123
+  context_path: /api
+
+database:
+  host: localhost
+  port: 3306
+  name: my_db
+  user: root
+  password: "123456"  # 请填写实际密码
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  password: ""  # Redis 密码，如无则留空
+
+session:
+  secret: "your-session-secret-change-this"  # 请生成随机密钥
+  max_age: 2592000  # 30天（秒）
+
+log:
+  level: info  # debug, info, warn, error
+  file_path: logs/app.log
