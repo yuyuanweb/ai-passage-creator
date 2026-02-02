@@ -35,6 +35,44 @@ ai:
 pexels:
   api_key: "your-pexels-api-key"  # https://www.pexels.com/api/
 
+# Iconify 图标库配置
+iconify:
+  base_url: "https://api.iconify.design"
+  timeout: 5000  # 毫秒
+
+# Mermaid 流程图配置
+mermaid:
+  cli: "mmdc"  # 需要全局安装 @mermaid-js/mermaid-cli: npm install -g @mermaid-js/mermaid-cli
+  output_format: "png"  # png/svg/pdf
+  theme: "default"  # default/dark/forest
+  width: 1200
+  height: 800
+  timeout: 30000  # 毫秒
+
+# Nano Banana (Gemini) AI 生图配置
+nano_banana:
+  api_key: "your-gemini-api-key"  # Google AI Studio: https://aistudio.google.com/apikey
+  model: "gemini-2.5-flash-image"
+  aspect_ratio: "16:9"  # 16:9/1:1/9:16
+  image_size: "1024x1024"
+
+# SVG 概念示意图配置
+svg_diagram:
+  enabled: true
+
+# 表情包检索配置
+emoji_pack:
+  suffix: "表情包"
+  timeout: 10000  # 毫秒
+
+# 腾讯云 COS 配置
+cos:
+  secret_id: "your-cos-secret-id"
+  secret_key: "your-cos-secret-key"
+  region: "ap-beijing"  # 地域，如：ap-beijing, ap-shanghai, ap-guangzhou
+  bucket: "your-bucket-name"
+  domain: ""  # CDN 加速域名（可选），如：https://cdn.example.com
+
 log:
   level: info  # debug, info, warn, error
   file_path: logs/app.log

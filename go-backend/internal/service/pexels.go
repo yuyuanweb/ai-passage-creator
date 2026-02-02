@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/yupi/ai-passage-creator/internal/common"
 	"github.com/yupi/ai-passage-creator/internal/config"
+	"github.com/yupi/ai-passage-creator/internal/model"
 )
 
 // PexelsService Pexels 图片检索服务
@@ -70,7 +72,27 @@ func (s *PexelsService) SearchImage(keywords string) (string, error) {
 	return result.Photos[0].Src.Large, nil
 }
 
+// GetMethod 返回方法名
+func (s *PexelsService) GetMethod() string {
+	return common.ImageMethodPexels
+}
+
+// IsAvailable 是否可用
+func (s *PexelsService) IsAvailable() bool {
+	return s.apiKey != ""
+}
+
+// GetImageData 获取图片数据（Pexels 是检索类服务，使用 SearchImage）
+func (s *PexelsService) GetImageData(req *model.ImageRequest) (*model.ImageData, error) {
+	url, err := s.SearchImage(req.Keywords)
+	if err != nil {
+		return nil, err
+	}
+	return model.FromURL(url), nil
+}
+
 // GetFallbackImage 获取降级图片（Picsum）
+// Deprecated: 使用 ImageServiceStrategy 的降级机制
 func (s *PexelsService) GetFallbackImage(position int) string {
 	return fmt.Sprintf("https://picsum.photos/seed/%d/800/600", position)
 }

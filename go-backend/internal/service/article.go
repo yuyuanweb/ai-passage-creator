@@ -46,13 +46,22 @@ func (s *ArticleService) Create(user *model.User, req *model.CreateArticleReques
 	// 生成任务 ID
 	taskID := uuid.NewString()
 
+	// 将 enabledImageMethods 转为 JSON
+	methodsJSON := ""
+	if len(req.EnabledImageMethods) > 0 {
+		methodsBytes, _ := json.Marshal(req.EnabledImageMethods)
+		methodsJSON = string(methodsBytes)
+	}
+
 	// 创建文章记录
 	article := &model.Article{
-		TaskID:     taskID,
-		UserID:     user.ID,
-		Topic:      req.Topic,
-		Status:     model.StatusPending,
-		CreateTime: time.Now(),
+		TaskID:              taskID,
+		UserID:              user.ID,
+		Topic:               req.Topic,
+		Style:               req.Style,
+		EnabledImageMethods: methodsJSON,
+		Status:              model.StatusPending,
+		CreateTime:          time.Now(),
 	}
 
 	if err := s.store.Create(article); err != nil {
@@ -60,9 +69,9 @@ func (s *ArticleService) Create(user *model.User, req *model.CreateArticleReques
 	}
 
 	// 异步执行文章生成
-	go s.executeAsync(taskID, req.Topic)
+	go s.executeAsync(taskID, req.Topic, req.Style, req.EnabledImageMethods)
 
-	log.Printf("文章任务已创建, taskId=%s, userId=%d", taskID, user.ID)
+	log.Printf("文章任务已创建, taskId=%s, userId=%d, style=%s", taskID, user.ID, req.Style)
 	return taskID, nil
 }
 
@@ -147,16 +156,19 @@ func (s *ArticleService) Delete(id int64, userID int64, isAdmin bool) error {
 }
 
 // executeAsync 异步执行文章生成
-func (s *ArticleService) executeAsync(taskID, topic string) {
-	log.Printf("异步任务开始, taskId=%s, topic=%s", taskID, topic)
+func (s *ArticleService) executeAsync(taskID, topic, style string, enabledImageMethods []string) {
+	log.Printf("异步任务开始, taskId=%s, topic=%s, style=%s, enabledImageMethods=%v",
+		taskID, topic, style, enabledImageMethods)
 
 	// 更新状态为处理中
 	_ = s.store.UpdateStatus(taskID, model.StatusProcessing, nil)
 
 	// 创建状态对象
 	state := &model.ArticleState{
-		TaskID: taskID,
-		Topic:  topic,
+		TaskID:              taskID,
+		Topic:               topic,
+		Style:               style,
+		EnabledImageMethods: enabledImageMethods,
 	}
 
 	// 执行智能体编排

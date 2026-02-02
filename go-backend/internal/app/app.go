@@ -46,11 +46,40 @@ func New(cfg *config.Config) (*App, error) {
 	// 服务层
 	userService := service.NewUserService(userStore)
 	quotaService := service.NewQuotaService(userStore)
+
+	// COS 服务（判断是否已配置）
+	cosEnabled := cfg.COS.Bucket != "" && cfg.COS.SecretID != "" && cfg.COS.SecretKey != ""
+	var cosService *service.CosService
+	if cosEnabled {
+		cosService = service.NewCosService(cfg.COS)
+		log.Printf("COS 服务已启用, bucket=%s, region=%s", cfg.COS.Bucket, cfg.COS.Region)
+	} else {
+		log.Println("COS 服务未配置，图片将使用原始 URL")
+	}
+
+	// 初始化所有图片服务
 	pexelsService := service.NewPexelsService(cfg)
-	cosService := service.NewCosService()
+	iconifyService := service.NewIconifyService(cfg.Iconify)
+	mermaidService := service.NewMermaidService(cfg.Mermaid)
+	nanoBananaService := service.NewNanoBananaService(cfg.NanoBanana)
+	svgDiagramService := service.NewSVGDiagramService(cfg.SVGDiagram, cfg.AI)
+	emojiPackService := service.NewEmojiPackService(cfg.EmojiPack)
+	picsumService := service.NewPicsumService() // 降级服务
+
+	// 初始化图片服务策略
+	imageStrategy := service.NewImageServiceStrategy(cosService, cosEnabled)
+	imageStrategy.RegisterService(pexelsService)
+	imageStrategy.RegisterService(iconifyService)
+	imageStrategy.RegisterService(mermaidService)
+	imageStrategy.RegisterService(nanoBananaService)
+	imageStrategy.RegisterService(svgDiagramService)
+	imageStrategy.RegisterService(emojiPackService)
+	imageStrategy.RegisterService(picsumService) // 注册降级服务
+
+	log.Println("图片服务策略初始化完成，已注册 7 个图片服务（含降级服务）")
 
 	// 智能体服务
-	agentService, err := service.NewArticleAgentService(cfg, pexelsService, cosService, sseManager)
+	agentService, err := service.NewArticleAgentService(cfg, imageStrategy, sseManager)
 	if err != nil {
 		return nil, fmt.Errorf("init agent service: %w", err)
 	}

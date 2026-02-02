@@ -36,6 +36,12 @@ func (h *ArticleHandler) Create(c *gin.Context) {
 		return
 	}
 
+	// 校验风格参数（允许为空）
+	if !common.IsValidArticleStyle(req.Style) {
+		c.JSON(http.StatusOK, common.Error(common.ErrParams.WithMessage("无效的文章风格")))
+		return
+	}
+
 	// 获取当前用户
 	session := sessions.Default(c)
 	user, err := h.userSvc.GetLoginUser(session)

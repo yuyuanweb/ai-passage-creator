@@ -8,13 +8,19 @@ import (
 
 // Config 应用配置
 type Config struct {
-	Server   ServerConfig   `mapstructure:"server"`
-	Database DatabaseConfig `mapstructure:"database"`
-	Redis    RedisConfig    `mapstructure:"redis"`
-	Session  SessionConfig  `mapstructure:"session"`
-	AI       AIConfig       `mapstructure:"ai"`
-	Pexels   PexelsConfig   `mapstructure:"pexels"`
-	Log      LogConfig      `mapstructure:"log"`
+	Server     ServerConfig     `mapstructure:"server"`
+	Database   DatabaseConfig   `mapstructure:"database"`
+	Redis      RedisConfig      `mapstructure:"redis"`
+	Session    SessionConfig    `mapstructure:"session"`
+	AI         AIConfig         `mapstructure:"ai"`
+	Pexels     PexelsConfig     `mapstructure:"pexels"`
+	Iconify    IconifyConfig    `mapstructure:"iconify"`
+	Mermaid    MermaidConfig    `mapstructure:"mermaid"`
+	NanoBanana NanoBananaConfig `mapstructure:"nano_banana"`
+	SVGDiagram SVGDiagramConfig `mapstructure:"svg_diagram"`
+	EmojiPack  EmojiPackConfig  `mapstructure:"emoji_pack"`
+	COS        COSConfig        `mapstructure:"cos"`
+	Log        LogConfig        `mapstructure:"log"`
 }
 
 // ServerConfig 服务器配置
@@ -62,6 +68,50 @@ type DashScopeConfig struct {
 // PexelsConfig Pexels 配置
 type PexelsConfig struct {
 	APIKey string `mapstructure:"api_key"`
+}
+
+// IconifyConfig Iconify 配置
+type IconifyConfig struct {
+	BaseURL string `mapstructure:"base_url"`
+	Timeout int    `mapstructure:"timeout"` // 毫秒
+}
+
+// MermaidConfig Mermaid 配置
+type MermaidConfig struct {
+	CLI          string `mapstructure:"cli"`           // mmdc 命令路径
+	OutputFormat string `mapstructure:"output_format"` // png/svg/pdf
+	Theme        string `mapstructure:"theme"`         // default/dark/forest
+	Width        int    `mapstructure:"width"`
+	Height       int    `mapstructure:"height"`
+	Timeout      int    `mapstructure:"timeout"` // 毫秒
+}
+
+// NanoBananaConfig Nano Banana (Gemini) 配置
+type NanoBananaConfig struct {
+	APIKey      string `mapstructure:"api_key"`
+	Model       string `mapstructure:"model"`        // gemini-2.5-flash-image
+	AspectRatio string `mapstructure:"aspect_ratio"` // 16:9/1:1/9:16
+	ImageSize   string `mapstructure:"image_size"`   // 1024x1024
+}
+
+// SVGDiagramConfig SVG 示意图配置
+type SVGDiagramConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+// EmojiPackConfig 表情包配置
+type EmojiPackConfig struct {
+	Suffix  string `mapstructure:"suffix"`  // "表情包"
+	Timeout int    `mapstructure:"timeout"` // 毫秒
+}
+
+// COSConfig 腾讯云 COS 配置
+type COSConfig struct {
+	SecretID  string `mapstructure:"secret_id"`
+	SecretKey string `mapstructure:"secret_key"`
+	Region    string `mapstructure:"region"`
+	Bucket    string `mapstructure:"bucket"`
+	Domain    string `mapstructure:"domain"` // CDN 域名（可选）
 }
 
 // LogConfig 日志配置

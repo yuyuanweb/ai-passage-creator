@@ -51,51 +51,42 @@ func (s *ArticleAgentService) agent2GenerateOutlineStream(ctx context.Context, s
 	return nil
 }
 
-// mergeImagesIntoContent 图文合成：将配图插入正文对应位置
+// mergeImagesIntoContent 图文合成：根据占位符将配图插入正文
 func (s *ArticleAgentService) mergeImagesIntoContent(state *model.ArticleState) {
-	content := state.Content
+	// 使用包含占位符的正文（Agent4 生成）
+	content := state.ContentWithPlaceholders
 	images := state.Images
+
+	log.Printf("图文合成：ContentWithPlaceholders长度=%d, 图片数量=%d", len(content), len(images))
 
 	if len(images) == 0 {
 		state.FullContent = content
 		return
 	}
 
-	var fullContent strings.Builder
+	fullContent := content
 
-	// 处理封面图（position=1）
-	for _, img := range images {
-		if img.Position == 1 {
-			fullContent.WriteString(fmt.Sprintf("![封面图](%s)\n\n", img.URL))
-			break
+	// 遍历所有配图，根据占位符替换为实际图片
+	replacedCount := 0
+	for i, image := range images {
+		placeholderID := image.PlaceholderID
+		log.Printf("图文合成：处理图片[%d] placeholderID=%s, url=%s", i, placeholderID, image.URL)
+
+		if placeholderID != "" {
+			// 检查占位符是否存在
+			if strings.Contains(fullContent, placeholderID) {
+				imageMarkdown := fmt.Sprintf("![%s](%s)", image.Description, image.URL)
+				fullContent = strings.ReplaceAll(fullContent, placeholderID, imageMarkdown)
+				replacedCount++
+				log.Printf("图文合成：成功替换占位符 %s", placeholderID)
+			} else {
+				log.Printf("图文合成：警告 - 占位符未找到: %s", placeholderID)
+			}
+		} else {
+			log.Printf("图文合成：警告 - 图片[%d]的placeholderID为空", i)
 		}
 	}
 
-	// 按行处理正文，在章节标题后插入对应图片
-	lines := strings.Split(content, "\n")
-	for _, line := range lines {
-		fullContent.WriteString(line)
-		fullContent.WriteString("\n")
-
-		// 检查是否是章节标题（以 ## 开头）
-		if strings.HasPrefix(line, "## ") {
-			sectionTitle := strings.TrimSpace(strings.TrimPrefix(line, "## "))
-			s.insertImageAfterSection(&fullContent, images, sectionTitle)
-		}
-	}
-
-	state.FullContent = fullContent.String()
-	log.Printf("图文合成完成, fullContentLength=%d", len(state.FullContent))
-}
-
-// insertImageAfterSection 在章节标题后插入对应图片
-func (s *ArticleAgentService) insertImageAfterSection(fullContent *strings.Builder, images []model.ImageResult, sectionTitle string) {
-	for _, image := range images {
-		if image.Position > 1 &&
-			image.SectionTitle != "" &&
-			strings.Contains(sectionTitle, strings.TrimSpace(image.SectionTitle)) {
-			fullContent.WriteString(fmt.Sprintf("\n![%s](%s)\n", image.Description, image.URL))
-			break
-		}
-	}
+	state.FullContent = fullContent
+	log.Printf("图文合成完成, fullContentLength=%d, 成功替换=%d个占位符", len(fullContent), replacedCount)
 }
