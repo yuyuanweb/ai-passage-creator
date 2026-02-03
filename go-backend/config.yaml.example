@@ -1,69 +1,78 @@
-# 配置文件示例
-# 使用说明：将此文件复制为 config.yaml，并填写实际的配置值
-# 注意：config.yaml 已在 .gitignore 中，不会被提交到 Git
+# ========================================
+# AI 爆款文章创作器 - Go 后端配置
+# ========================================
+# Docker 部署说明：
+#   配置通过环境变量注入（在 .env 文件中配置）
+#   只需将此文件复制为 config.yaml 即可
+# 本地开发说明：
+#   直接修改下方的配置值
+# ========================================
 
 server:
-  port: 8567
+  port: 8123
   context_path: /api
 
+# 数据库配置（Docker 环境通过环境变量覆盖）
 database:
   host: localhost
   port: 3306
   name: ai_passage_creator
   user: root
-  password: "your-password"  # 请填写实际密码
+  password: "123456"
   max_idle_conns: 10
   max_open_conns: 100
 
+# Redis 配置（Docker 环境通过环境变量覆盖）
 redis:
   host: localhost
   port: 6379
   db: 0
-  password: ""  # Redis 密码，如无则留空
+  password: ""
 
+# Session 配置
 session:
-  secret: "your-session-secret-change-this"  # 请生成随机密钥
-  max_age: 2592000  # 30天（秒）
+  secret: "your-session-secret-change-this"
+  max_age: 2592000  # 30天
 
-# 阿里云 DashScope 配置
+# ============ 必需配置 ============
+
+# 阿里云 DashScope 配置（必需）
 ai:
   dashscope:
-    api_key: "your-dashscope-api-key"  # https://bailian.console.aliyun.com/
-    model: "qwen-max"
+    api_key: ""  # ⚠️ 必需：https://bailian.console.aliyun.com/
+    model: "qwen-plus"
 
-# 智能体编排配置
+# 智能体编排配置（第9期新增）
 agent:
   orchestrator:
-    # 是否启用多智能体编排模式（支持配图并行生成）
-    # true: 使用多智能体编排器 (ArticleAgentOrchestrator)
-    # false: 使用原有的 ArticleAgentService
-    enabled: true
-  # Agent 最大迭代次数
+    enabled: true  # 启用多智能体编排模式
   max_iterations: 10
 
-# Pexels 图片 API 配置
+# Pexels 图片配置（必需）
 pexels:
-  api_key: "your-pexels-api-key"  # https://www.pexels.com/api/
+  api_key: ""  # ⚠️ 必需：https://www.pexels.com/api/
+
+# ============ 可选配置 ============
 
 # Iconify 图标库配置
 iconify:
   base_url: "https://api.iconify.design"
-  timeout: 5000  # 毫秒
+  timeout: 5000
 
 # Mermaid 流程图配置
 mermaid:
-  cli: "mmdc"  # 需要全局安装 @mermaid-js/mermaid-cli: npm install -g @mermaid-js/mermaid-cli
-  output_format: "png"  # png/svg/pdf
-  theme: "default"  # default/dark/forest
+  cli: "mmdc"  # 需安装：npm install -g @mermaid-js/mermaid-cli
+  output_format: "png"
+  theme: "default"
   width: 1200
   height: 800
-  timeout: 30000  # 毫秒
+  timeout: 30000
 
-# Nano Banana (Gemini) AI 生图配置
+# Nano Banana (Gemini) AI 生图配置（可选，VIP 功能）
 nano_banana:
-  api_key: "your-gemini-api-key"  # Google AI Studio: https://aistudio.google.com/apikey
+  api_key: ""  # https://aistudio.google.com/apikey
   model: "gemini-2.5-flash-image"
-  aspect_ratio: "16:9"  # 16:9/1:1/9:16
+  aspect_ratio: "16:9"
   image_size: "1024x1024"
 
 # SVG 概念示意图配置
@@ -72,10 +81,10 @@ svg_diagram:
 
 # 表情包检索配置
 emoji_pack:
-  suffix: "表情包"
+  suffix: "熊猫头表情包"
   timeout: 10000  # 毫秒
 
-# 腾讯云 COS 配置
+# 腾讯云 COS 配置（可选，用于图片存储）
 cos:
   secret_id: "your-cos-secret-id"
   secret_key: "your-cos-secret-key"
@@ -90,6 +99,7 @@ stripe:
   success_url: "http://localhost:5173/vip?success=true"  # 支付成功回调 URL
   cancel_url: "http://localhost:5173/vip?cancelled=true"  # 支付取消回调 URL
 
+# 日志配置
 log:
-  level: info  # debug, info, warn, error
+  level: info
   file_path: logs/app.log

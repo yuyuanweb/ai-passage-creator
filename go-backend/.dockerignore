@@ -1,0 +1,55 @@
+# Git 相关
+.git
+.gitignore
+
+# IDE 相关
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# 编译产物
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# 日志文件
+logs/
+*.log
+
+# 配置文件（敏感信息）
+config.yaml
+*.local.yaml
+
+# 临时文件
+tmp/
+temp/
+
+# 测试覆盖率
+*.coverprofile
+coverage.txt
+
+# 依赖管理
+vendor/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# Docker 相关
+Dockerfile*
+.dockerignore
+
+# 文档
+README.md
+*.md
+
+# 其他
+.env
+.env.*

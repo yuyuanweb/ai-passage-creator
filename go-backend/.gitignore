@@ -1,5 +1,7 @@
 # 配置文件（包含敏感信息）
 config.yaml
+.env
+
 config.local.yaml
 
 # IDE

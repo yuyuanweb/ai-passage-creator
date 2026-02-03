@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/viper"
 )
@@ -142,6 +143,7 @@ type LogConfig struct {
 }
 
 // LoadConfig 加载配置文件
+// 支持通过环境变量覆盖配置（Docker 部署时使用）
 func LoadConfig(configPath string) (*Config, error) {
 	v := viper.New()
 	v.SetConfigFile(configPath)
@@ -157,7 +159,87 @@ func LoadConfig(configPath string) (*Config, error) {
 		return nil, fmt.Errorf("解析配置文件失败: %w", err)
 	}
 
+	// 环境变量覆盖配置（Docker 部署时使用）
+	applyEnvOverrides(&config)
+
 	return &config, nil
+}
+
+// applyEnvOverrides 使用环境变量覆盖配置
+// 参考 Spring Boot 的 ${VAR:default} 机制
+func applyEnvOverrides(cfg *Config) {
+	// 数据库配置
+	if val := getEnv("DB_HOST", ""); val != "" {
+		cfg.Database.Host = val
+	}
+	if val := getEnv("DB_PORT", ""); val != "" {
+		fmt.Sscanf(val, "%d", &cfg.Database.Port)
+	}
+	if val := getEnv("DB_NAME", ""); val != "" {
+		cfg.Database.Name = val
+	}
+	if val := getEnv("DB_USER", ""); val != "" {
+		cfg.Database.User = val
+	}
+	if val := getEnv("DB_PASSWORD", ""); val != "" {
+		cfg.Database.Password = val
+	}
+
+	// Redis 配置
+	if val := getEnv("REDIS_HOST", ""); val != "" {
+		cfg.Redis.Host = val
+	}
+	if val := getEnv("REDIS_PORT", ""); val != "" {
+		fmt.Sscanf(val, "%d", &cfg.Redis.Port)
+	}
+	if val := getEnv("REDIS_PASSWORD", ""); val != "" {
+		cfg.Redis.Password = val
+	}
+
+	// AI 配置
+	if val := getEnv("DASHSCOPE_API_KEY", ""); val != "" {
+		cfg.AI.DashScope.APIKey = val
+	}
+
+	// Pexels 配置
+	if val := getEnv("PEXELS_API_KEY", ""); val != "" {
+		cfg.Pexels.APIKey = val
+	}
+
+	// Nano Banana 配置
+	if val := getEnv("NANO_BANANA_API_KEY", ""); val != "" {
+		cfg.NanoBanana.APIKey = val
+	}
+
+	// Stripe 配置
+	if val := getEnv("STRIPE_API_KEY", ""); val != "" {
+		cfg.Stripe.APIKey = val
+	}
+	if val := getEnv("STRIPE_WEBHOOK_SECRET", ""); val != "" {
+		cfg.Stripe.WebhookSecret = val
+	}
+
+	// 腾讯云 COS 配置
+	if val := getEnv("TENCENT_COS_SECRET_ID", ""); val != "" {
+		cfg.COS.SecretID = val
+	}
+	if val := getEnv("TENCENT_COS_SECRET_KEY", ""); val != "" {
+		cfg.COS.SecretKey = val
+	}
+	if val := getEnv("TENCENT_COS_REGION", ""); val != "" {
+		cfg.COS.Region = val
+	}
+	if val := getEnv("TENCENT_COS_BUCKET", ""); val != "" {
+		cfg.COS.Bucket = val
+	}
+}
+
+// getEnv 获取环境变量，如果不存在则返回默认值
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
 
 // GetDSN 获取数据库连接字符串
