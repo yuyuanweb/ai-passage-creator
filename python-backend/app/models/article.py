@@ -16,6 +16,7 @@ class Article(Base):
     task_id = Column("taskId", String(64), nullable=False, unique=True, comment="任务ID（UUID）")
     user_id = Column("userId", BigInteger, nullable=False, comment="用户ID")
     topic = Column(String(500), nullable=False, comment="选题")
+    style = Column(String(20), nullable=True, comment="文章风格：tech/emotional/educational/humorous")
     main_title = Column("mainTitle", String(200), nullable=True, comment="主标题")
     sub_title = Column("subTitle", String(300), nullable=True, comment="副标题")
     outline = Column(Text, nullable=True, comment="大纲（JSON格式）")

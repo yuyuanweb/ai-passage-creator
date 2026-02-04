@@ -21,3 +21,21 @@ class ArticleConstant:
     
     # Picsum 随机图片 URL 模板
     PICSUM_URL_TEMPLATE = "https://picsum.photos/800/600?random={}"
+    
+    # Bing 图片搜索地址（第 5 期新增）
+    BING_IMAGE_SEARCH_URL = "https://cn.bing.com/images/async"
+    
+    # 表情包关键词后缀（程序固定拼接）
+    EMOJI_PACK_SUFFIX = "表情包"
+    
+    # Bing 图片搜索每批最大数量
+    BING_MAX_IMAGES = 30
+    
+    # SVG 文件前缀
+    SVG_FILE_PREFIX = "svg-chart"
+    
+    # SVG 默认宽度
+    SVG_DEFAULT_WIDTH = 800
+    
+    # SVG 默认高度
+    SVG_DEFAULT_HEIGHT = 600

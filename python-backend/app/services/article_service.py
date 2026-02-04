@@ -26,15 +26,19 @@ class ArticleService:
     async def create_article_task_with_quota_check(
         self,
         topic: str,
-        login_user: LoginUserVO
+        login_user: LoginUserVO,
+        style: Optional[str] = None,
+        enabled_image_methods: Optional[List[str]] = None
     ) -> str:
         """
-        创建文章任务（暂不检查配额，第 7 期实现）
+        创建文章任务（第 5 期：支持风格和配图方式选择）
         
         Args:
             topic: 选题
             login_user: 登录用户
-            
+            style: 文章风格
+            enabled_image_methods: 允许的配图方式
+
         Returns:
             任务 ID
         """
@@ -43,8 +47,8 @@ class ArticleService:
         
         # 插入文章记录
         query = """
-            INSERT INTO article (taskId, userId, topic, status, createTime)
-            VALUES (:taskId, :userId, :topic, :status, :createTime)
+            INSERT INTO article (taskId, userId, topic, style, status, createTime)
+            VALUES (:taskId, :userId, :topic, :style, :status, :createTime)
         """
         await self.db.execute(
             query=query,
@@ -52,6 +56,7 @@ class ArticleService:
                 "taskId": task_id,
                 "userId": login_user.id,
                 "topic": topic,
+                "style": style,  # 第 5 期新增
                 "status": ArticleStatusEnum.PENDING.value,
                 "createTime": datetime.now()
             }
@@ -224,7 +229,7 @@ class ArticleService:
             cover = next((img for img in state.images if img.position == 1), None)
             if cover and cover.url:
                 cover_image = cover.url
-        
+
         query = """
             UPDATE article 
             SET mainTitle = :mainTitle,
@@ -264,13 +269,14 @@ class ArticleService:
             taskId=article_dict["taskId"],
             userId=article_dict["userId"],
             topic=article_dict["topic"],
+            style=article_dict.get("style"),
             mainTitle=article_dict["mainTitle"],
             subTitle=article_dict["subTitle"],
-            outline=article_dict["outline"],
+            outline=json.loads(article_dict["outline"]) if article_dict["outline"] else None,
             content=article_dict["content"],
             fullContent=article_dict["fullContent"],
             coverImage=article_dict.get("coverImage"),
-            images=article_dict["images"],
+            images=json.loads(article_dict["images"]) if article_dict["images"] else None,
             status=article_dict["status"],
             errorMessage=article_dict["errorMessage"],
             createTime=article_dict["createTime"].isoformat(),

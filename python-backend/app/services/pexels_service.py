@@ -7,11 +7,12 @@ from typing import Optional
 from app.config import settings
 from app.constants.article import ArticleConstant
 from app.models.enums import ImageMethodEnum
+from app.services.image_search_service import ImageSearchService
 
 logger = logging.getLogger(__name__)
 
 
-class PexelsService:
+class PexelsService(ImageSearchService):
     """Pexels 图片检索服务"""
     
     def __init__(self):

@@ -1,6 +1,7 @@
 """枚举类型定义"""
 
 from enum import Enum
+from typing import Optional
 
 
 class ArticleStatusEnum(str, Enum):
@@ -12,11 +13,59 @@ class ArticleStatusEnum(str, Enum):
     FAILED = "FAILED"
 
 
+class ArticleStyleEnum(str, Enum):
+    """文章风格枚举（第 5 期新增）"""
+    
+    TECH = "tech"
+    EMOTIONAL = "emotional"
+    EDUCATIONAL = "educational"
+    HUMOROUS = "humorous"
+    
+    @classmethod
+    def is_valid(cls, value: Optional[str]) -> bool:
+        """校验是否为有效的风格值"""
+        if not value:
+            return True  # 允许为空
+        return value in [e.value for e in cls]
+
+
 class ImageMethodEnum(str, Enum):
-    """配图方式枚举"""
+    """配图方式枚举（第 5 期扩展）"""
     
     PEXELS = "PEXELS"
+    NANO_BANANA = "NANO_BANANA"
+    MERMAID = "MERMAID"
+    ICONIFY = "ICONIFY"
+    EMOJI_PACK = "EMOJI_PACK"
+    SVG_DIAGRAM = "SVG_DIAGRAM"
     PICSUM = "PICSUM"
+    
+    def is_ai_generated(self) -> bool:
+        """是否为 AI 生图方式"""
+        return self in [
+            ImageMethodEnum.NANO_BANANA,
+            ImageMethodEnum.MERMAID,
+            ImageMethodEnum.SVG_DIAGRAM
+        ]
+    
+    def is_fallback(self) -> bool:
+        """是否为降级方案"""
+        return self == ImageMethodEnum.PICSUM
+    
+    @classmethod
+    def get_default_search_method(cls):
+        """获取默认的图库检索方式"""
+        return cls.PEXELS
+    
+    @classmethod
+    def get_default_ai_method(cls):
+        """获取默认的 AI 生图方式"""
+        return cls.NANO_BANANA
+    
+    @classmethod
+    def get_fallback_method(cls):
+        """获取降级方案"""
+        return cls.PICSUM
 
 
 class SseMessageTypeEnum(str, Enum):

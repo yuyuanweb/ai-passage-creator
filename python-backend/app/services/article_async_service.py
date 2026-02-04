@@ -3,7 +3,7 @@
 import json
 import logging
 import asyncio
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 
 from app.schemas.article import ArticleState
 from app.models.enums import ArticleStatusEnum, SseMessageTypeEnum
@@ -18,15 +18,23 @@ logger = logging.getLogger(__name__)
 class ArticleAsyncService:
     """文章异步任务服务"""
     
-    async def execute_article_generation(self, task_id: str, topic: str):
+    async def execute_article_generation(
+        self,
+        task_id: str,
+        topic: str,
+        style: Optional[str] = None,
+        enabled_image_methods: Optional[List[str]] = None
+    ):
         """
-        异步执行文章生成
+        异步执行文章生成（第 5 期：支持风格和配图方式选择）
         
         Args:
             task_id: 任务 ID
             topic: 选题
+            style: 文章风格
+            enabled_image_methods: 允许的配图方式
         """
-        logger.info(f"异步任务开始, taskId={task_id}, topic={topic}")
+        logger.info(f"异步任务开始, taskId={task_id}, topic={topic}, style={style}")
         
         # 初始化服务
         article_agent_service = ArticleAgentService()
@@ -40,6 +48,8 @@ class ArticleAsyncService:
             state = ArticleState()
             state.task_id = task_id
             state.topic = topic
+            state.style = style  # 第 5 期新增
+            state.enabled_image_methods = enabled_image_methods  # 第 5 期新增
             
             # 执行智能体编排,并通过 SSE 推送进度
             await article_agent_service.execute_article_generation(

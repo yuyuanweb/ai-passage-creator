@@ -36,12 +36,19 @@ async def create_article(
     # 检查并消耗配额 + 创建文章任务（在同一事务中）
     task_id = await service.create_article_task_with_quota_check(
         request.topic,
-        current_user
+        current_user,
+        request.style,  # 第 5 期新增
+        request.enabled_image_methods  # 第 5 期新增
     )
     
     # 异步执行文章生成
     asyncio.create_task(
-        article_async_service.execute_article_generation(task_id, request.topic)
+        article_async_service.execute_article_generation(
+            task_id,
+            request.topic,
+            request.style,  # 第 5 期新增
+            request.enabled_image_methods  # 第 5 期新增
+        )
     )
     
     return BaseResponse.success(data=task_id, message="任务创建成功")

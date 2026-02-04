@@ -19,7 +19,8 @@ from app.schemas.article import (
     OutlineSection,
     OutlineResult,
     ImageRequirement,
-    ImageResult
+    ImageResult,
+    Agent4Result
 )
 
 __all__ = [
@@ -42,4 +43,5 @@ __all__ = [
     "OutlineResult",
     "ImageRequirement",
     "ImageResult",
+    "Agent4Result",
 ]
