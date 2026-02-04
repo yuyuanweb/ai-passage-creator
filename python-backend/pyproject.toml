@@ -2,7 +2,6 @@
 name = "ai-passage-creator-backend"
 version = "0.0.1"
 description = "AI 爆款文章创作器 - Python 后端"
-readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "fastapi==0.115.0",
@@ -19,6 +18,9 @@ dependencies = [
     "python-dotenv==1.0.1",
     "passlib[bcrypt]==1.7.4",
     "python-dateutil==2.9.0.post0",
+    "openai==1.58.1",
+    "httpx==0.28.1",
+    "cos-python-sdk-v5==1.9.32",
 ]
 
 [build-system]

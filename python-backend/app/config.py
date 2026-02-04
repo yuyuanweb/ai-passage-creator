@@ -1,4 +1,4 @@
-"""配置管理 - 第 2 期：基础配置"""
+"""配置管理 - 第 3 期：添加 AI 相关配置"""
 
 import os
 from pathlib import Path
@@ -10,7 +10,7 @@ ENV_FILE = BASE_DIR / ".env"
 
 
 class Settings(BaseSettings):
-    """应用配置（第 2 期：用户模块 + Session）"""
+    """应用配置（第 3 期：AI 核心创作流程）"""
     
     # 服务器配置
     server_port: int = 8567
@@ -35,6 +35,20 @@ class Settings(BaseSettings):
     
     # 密码加密盐值
     password_salt: str
+    
+    # AI 配置（第 3 期新增）
+    dashscope_api_key: str
+    dashscope_model: str = "qwen-plus"
+    
+    # Pexels 图片搜索（第 3 期新增）
+    pexels_api_key: str
+    
+    # 腾讯云 COS（第 3 期新增）
+    tencent_cos_secret_id: str
+    tencent_cos_secret_key: str
+    tencent_cos_region: str
+    tencent_cos_bucket: str
+    tencent_cos_domain: str = ""
     
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE),
