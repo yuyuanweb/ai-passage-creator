@@ -1,0 +1,148 @@
+# ========================================
+# AI 爆款文章创作器 - Python 版 Docker Compose
+# ========================================
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ai-passage-mysql-py
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ai_passage_creator}
+      TZ: ${TZ:-Asia/Shanghai}
+    expose:
+      - "3306"
+    volumes:
+      - mysql-data-py:/var/lib/mysql
+      - ../sql/create_table.sql:/docker-entrypoint-initdb.d/01_create_table.sql:ro
+      - ../sql/update_quota.sql:/docker-entrypoint-initdb.d/02_update_quota.sql:ro
+      - ../sql/add_phase_fields.sql:/docker-entrypoint-initdb.d/03_add_phase_fields.sql:ro
+      - ../sql/add_article_style.sql:/docker-entrypoint-initdb.d/04_add_article_style.sql:ro
+      - ../sql/add_vip_payment.sql:/docker-entrypoint-initdb.d/05_add_vip_payment.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-123456}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --character-set-client-handshake=FALSE
+      - --init-connect=SET NAMES utf8mb4
+      - --default-authentication-plugin=mysql_native_password
+    networks:
+      - app-network-py
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai-passage-redis-py
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    expose:
+      - "6379"
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD:-redis123}
+    volumes:
+      - redis-data-py:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis123}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app-network-py
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-passage-creator-python:latest
+    container_name: ai-passage-backend-py
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8123
+
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-ai_passage_creator}
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 0
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis123}
+
+      SESSION_SECRET_KEY: ${SESSION_SECRET_KEY:-change-me-in-production}
+      SESSION_MAX_AGE: ${SESSION_MAX_AGE:-2592000}
+      PASSWORD_SALT: ${PASSWORD_SALT:-yupi}
+
+      DASHSCOPE_API_KEY: ${DASHSCOPE_API_KEY:?请在 .env 中设置 DASHSCOPE_API_KEY}
+      DASHSCOPE_MODEL: ${DASHSCOPE_MODEL:-qwen-plus}
+      PEXELS_API_KEY: ${PEXELS_API_KEY:?请在 .env 中设置 PEXELS_API_KEY}
+
+      NANO_BANANA_API_KEY: ${NANO_BANANA_API_KEY:-}
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost/vip?success=true}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost/vip?cancelled=true}
+
+      TENCENT_COS_SECRET_ID: ${TENCENT_COS_SECRET_ID:-}
+      TENCENT_COS_SECRET_KEY: ${TENCENT_COS_SECRET_KEY:-}
+      TENCENT_COS_REGION: ${TENCENT_COS_REGION:-ap-beijing}
+      TENCENT_COS_BUCKET: ${TENCENT_COS_BUCKET:-}
+      TENCENT_COS_DOMAIN: ${TENCENT_COS_DOMAIN:-}
+    ports:
+      - "${BACKEND_PORT:-8123}:8123"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    networks:
+      - app-network-py
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    image: ai-passage-frontend:latest
+    container_name: ai-passage-frontend-py
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Asia/Shanghai}
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network-py
+
+networks:
+  app-network-py:
+    driver: bridge
+    name: ai-passage-network-py
+
+volumes:
+  mysql-data-py:
+    name: ai-passage-mysql-data-py
+  redis-data-py:
+    name: ai-passage-redis-data-py
