@@ -14,6 +14,8 @@ from app.services.svg_diagram_service import SvgDiagramService
 from app.services.image_service_strategy import ImageServiceStrategy
 from app.services.image_search_service import ImageSearchService
 from app.services.payment_service import PaymentService
+from app.services.agent_log_service import AgentLogService
+from app.services.statistics_service import StatisticsService
 
 __all__ = [
     "UserService",
@@ -30,4 +32,6 @@ __all__ = [
     "ImageServiceStrategy",
     "ImageSearchService",
     "PaymentService",
+    "AgentLogService",
+    "StatisticsService",
 ]

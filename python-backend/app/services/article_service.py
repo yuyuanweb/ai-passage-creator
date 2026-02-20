@@ -357,6 +357,7 @@ class ArticleService:
         current_outline = [OutlineSection(**item) for item in json.loads(article["outline"])]
         agent_service = ArticleAgentService()
         modified_outline = await agent_service.ai_modify_outline(
+            task_id=task_id,
             main_title=article["mainTitle"],
             sub_title=article["subTitle"],
             current_outline=current_outline,

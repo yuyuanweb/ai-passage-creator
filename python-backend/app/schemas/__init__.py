@@ -22,6 +22,7 @@ from app.schemas.article import (
     ImageResult,
     Agent4Result
 )
+from app.schemas.statistics import AgentLogVO, AgentExecutionStatsVO, StatisticsVO
 
 __all__ = [
     "BaseResponse",
@@ -44,4 +45,7 @@ __all__ = [
     "ImageRequirement",
     "ImageResult",
     "Agent4Result",
+    "AgentLogVO",
+    "AgentExecutionStatsVO",
+    "StatisticsVO",
 ]
