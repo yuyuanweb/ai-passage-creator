@@ -28,6 +28,16 @@ class ArticleQueryRequest(PageRequest):
     status: Optional[str] = Field(None, description="状态")
 
 
+class TitleOption(BaseModel):
+    """标题方案"""
+
+    main_title: str = Field(..., alias="mainTitle")
+    sub_title: str = Field(..., alias="subTitle")
+
+    class Config:
+        populate_by_name = True
+
+
 class ArticleVO(BaseModel):
     """文章视图对象"""
     
@@ -35,15 +45,18 @@ class ArticleVO(BaseModel):
     task_id: str = Field(..., alias="taskId")
     user_id: int = Field(..., alias="userId")
     topic: str
+    user_description: Optional[str] = Field(None, alias="userDescription")
     style: Optional[str] = None
     main_title: Optional[str] = Field(None, alias="mainTitle")
     sub_title: Optional[str] = Field(None, alias="subTitle")
+    title_options: Optional[List[TitleOption]] = Field(None, alias="titleOptions")
     outline: Optional[List[Any]] = None
     content: Optional[str] = None
     full_content: Optional[str] = Field(None, alias="fullContent")
     cover_image: Optional[str] = Field(None, alias="coverImage")
     images: Optional[List[Any]] = None
     status: str
+    phase: Optional[str] = None
     error_message: Optional[str] = Field(None, alias="errorMessage")
     create_time: str = Field(..., alias="createTime")
     completed_time: Optional[str] = Field(None, alias="completedTime")
@@ -124,7 +137,10 @@ class ArticleState:
     def __init__(self):
         self.task_id: Optional[str] = None
         self.topic: Optional[str] = None
+        self.user_description: Optional[str] = None
         self.style: Optional[str] = None  # 第 5 期新增
+        self.phase: Optional[str] = None
+        self.title_options: Optional[List[TitleOption]] = None
         self.enabled_image_methods: Optional[List[str]] = None  # 第 5 期新增
         self.title: Optional[TitleResult] = None
         self.outline: Optional[OutlineResult] = None
@@ -133,3 +149,35 @@ class ArticleState:
         self.images: Optional[List[ImageResult]] = None
         self.cover_image: Optional[str] = None
         self.full_content: Optional[str] = None
+
+
+class ArticleConfirmTitleRequest(BaseModel):
+    """确认标题请求"""
+
+    task_id: str = Field(..., alias="taskId", min_length=1)
+    selected_main_title: str = Field(..., alias="selectedMainTitle", min_length=1)
+    selected_sub_title: str = Field(..., alias="selectedSubTitle", min_length=1)
+    user_description: Optional[str] = Field(None, alias="userDescription")
+
+    class Config:
+        populate_by_name = True
+
+
+class ArticleConfirmOutlineRequest(BaseModel):
+    """确认大纲请求"""
+
+    task_id: str = Field(..., alias="taskId", min_length=1)
+    outline: List[OutlineSection] = Field(..., min_length=1)
+
+    class Config:
+        populate_by_name = True
+
+
+class ArticleAiModifyOutlineRequest(BaseModel):
+    """AI 修改大纲请求"""
+
+    task_id: str = Field(..., alias="taskId", min_length=1)
+    modify_suggestion: str = Field(..., alias="modifySuggestion", min_length=1)
+
+    class Config:
+        populate_by_name = True

@@ -13,6 +13,29 @@ class ArticleStatusEnum(str, Enum):
     FAILED = "FAILED"
 
 
+class ArticlePhaseEnum(str, Enum):
+    """文章阶段枚举（第 6 期新增）"""
+
+    PENDING = "PENDING"
+    TITLE_GENERATING = "TITLE_GENERATING"
+    TITLE_SELECTING = "TITLE_SELECTING"
+    OUTLINE_GENERATING = "OUTLINE_GENERATING"
+    OUTLINE_EDITING = "OUTLINE_EDITING"
+    CONTENT_GENERATING = "CONTENT_GENERATING"
+
+    def can_transition_to(self, target_phase: "ArticlePhaseEnum") -> bool:
+        """校验是否可流转到目标阶段"""
+        transitions = {
+            ArticlePhaseEnum.PENDING: {ArticlePhaseEnum.TITLE_GENERATING},
+            ArticlePhaseEnum.TITLE_GENERATING: {ArticlePhaseEnum.TITLE_SELECTING},
+            ArticlePhaseEnum.TITLE_SELECTING: {ArticlePhaseEnum.OUTLINE_GENERATING},
+            ArticlePhaseEnum.OUTLINE_GENERATING: {ArticlePhaseEnum.OUTLINE_EDITING},
+            ArticlePhaseEnum.OUTLINE_EDITING: {ArticlePhaseEnum.CONTENT_GENERATING},
+            ArticlePhaseEnum.CONTENT_GENERATING: set(),
+        }
+        return target_phase in transitions.get(self, set())
+
+
 class ArticleStyleEnum(str, Enum):
     """文章风格枚举（第 5 期新增）"""
     
@@ -71,14 +94,20 @@ class ImageMethodEnum(str, Enum):
 class SseMessageTypeEnum(str, Enum):
     """SSE 消息类型枚举"""
     
-    # 智能体1完成（生成标题）
+    # 智能体1完成（生成标题方案）
     AGENT1_COMPLETE = "AGENT1_COMPLETE"
+
+    # 标题方案生成完成（等待用户选择）
+    TITLES_GENERATED = "TITLES_GENERATED"
     
     # 智能体2流式输出（大纲）
     AGENT2_STREAMING = "AGENT2_STREAMING"
     
     # 智能体2完成（生成大纲）
     AGENT2_COMPLETE = "AGENT2_COMPLETE"
+
+    # 大纲生成完成（等待用户编辑）
+    OUTLINE_GENERATED = "OUTLINE_GENERATED"
     
     # 智能体3流式输出（正文）
     AGENT3_STREAMING = "AGENT3_STREAMING"
